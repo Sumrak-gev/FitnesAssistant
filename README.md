@@ -20,6 +20,11 @@ lib/
 ```
 
 ## Запуск
+Flutter SDK в репозиторий не входит — он устанавливается отдельно
+(например, в `C:\flutter`) и должен быть доступен в `PATH`.
+
+Платформы: Android и iOS.
+
 ```
 flutter pub get
 flutter run
