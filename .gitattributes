@@ -1,0 +1,4 @@
+* text=auto
+# Шаблонный код платформ не должен влиять на статистику языков GitHub
+android/** linguist-generated
+ios/** linguist-generated
