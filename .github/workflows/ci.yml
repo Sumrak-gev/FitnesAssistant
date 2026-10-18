@@ -31,7 +31,7 @@ jobs:
           POSTGRES_DB: fitness_test
         ports: ['5432:5432']
         options: >-
-          --health-cmd 'pg_isready -U fitness_ci -d fitness_test'
+          --health-cmd "pg_isready -U fitness_ci -d fitness_test"
           --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       DATABASE_URL: postgresql+psycopg://fitness_ci:ci_only@127.0.0.1:5432/fitness_test
