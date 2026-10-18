@@ -39,3 +39,16 @@ ios/Flutter/flutter_export_environment.sh
 *.apk
 *.aab
 .DS_Store
+
+# Server and secrets
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+*.sqlite
+*.sqlite3
+*.db
+*.egg-info/
