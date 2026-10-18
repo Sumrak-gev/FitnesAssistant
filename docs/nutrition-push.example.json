@@ -1,0 +1,52 @@
+{
+  "changes": [
+    {
+      "mutationId": "23643c5e-70e9-4639-a8b2-9ada6823a3e5",
+      "id": "11111111-1111-4111-8111-111111111111",
+      "entity": "product",
+      "operation": "upsert",
+      "baseVersion": 0,
+      "clientRevision": 1,
+      "data": {
+        "name": "Рис отварной",
+        "calories": 130.0,
+        "protein": 2.7,
+        "fat": 0.3,
+        "carbs": 28.0
+      }
+    },
+    {
+      "mutationId": "15f107bc-b6e0-4090-8de0-a6e30f5fe8ca",
+      "id": "c66ca37d-31ab-4a7d-9cbf-70cd4c0094d4",
+      "entity": "meal",
+      "operation": "upsert",
+      "baseVersion": 0,
+      "clientRevision": 1,
+      "data": {
+        "day": "2026-10-18",
+        "kind": "lunch"
+      }
+    },
+    {
+      "mutationId": "e97d527f-6555-4703-8852-455aba3d4029",
+      "id": "6a5a47f5-313a-47a0-9318-447ac51cd756",
+      "entity": "entry",
+      "operation": "upsert",
+      "baseVersion": 0,
+      "clientRevision": 1,
+      "data": {
+        "mealId": "c66ca37d-31ab-4a7d-9cbf-70cd4c0094d4",
+        "productId": "11111111-1111-4111-8111-111111111111",
+        "grams": 125.0,
+        "snapshot": {
+          "id": "11111111-1111-4111-8111-111111111111",
+          "name": "Рис отварной",
+          "calories": 130.0,
+          "protein": 2.7,
+          "fat": 0.3,
+          "carbs": 28.0
+        }
+      }
+    }
+  ]
+}

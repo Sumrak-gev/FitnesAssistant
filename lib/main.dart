@@ -56,8 +56,11 @@ class _FitnessAssistantAppState extends State<FitnessAssistantApp>
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: _profile,
+    return MultiProvider(
+      providers: [
+        Provider<AppDatabase>.value(value: _profile.repository.database),
+        ChangeNotifierProvider<ProfileController>.value(value: _profile),
+      ],
       child: MaterialApp(
         title: 'Фитнес-помощник',
         debugShowCheckedModeBanner: false,

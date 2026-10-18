@@ -24,26 +24,30 @@ class ProfileRepository {
     );
   }
 
-  Future<void> saveProfile(UserProfile profile) async {
-    profile.validate();
-    await database
-        .into(database.localProfiles)
-        .insertOnConflictUpdate(
-          LocalProfilesCompanion.insert(
-            id: const Value(1),
-            name: profile.name.trim(),
-            birthDate: Value(profile.birthDate),
-            sex: profile.sex.name,
-            heightCm: Value(profile.heightCm),
-            weightKg: Value(profile.weightKg),
-            targetWeightKg: Value(profile.targetWeightKg),
-            activity: profile.activity.name,
-            goal: profile.goal.name,
-            programId: Value(profile.programId),
-            updatedAt: DateTime.now().toUtc(),
-          ),
-        );
-  }
+  Future<void> saveProfile(UserProfile profile) =>
+      database.transaction(() async {
+        profile.validate();
+        await database
+            .into(database.localProfiles)
+            .insertOnConflictUpdate(
+              LocalProfilesCompanion.insert(
+                id: const Value(1),
+                name: profile.name.trim(),
+                birthDate: Value(profile.birthDate),
+                sex: profile.sex.name,
+                heightCm: Value(profile.heightCm),
+                weightKg: Value(profile.weightKg),
+                targetWeightKg: Value(profile.targetWeightKg),
+                activity: profile.activity.name,
+                goal: profile.goal.name,
+                programId: Value(profile.programId),
+                updatedAt: DateTime.now().toUtc(),
+              ),
+            );
+        await (database.update(database.nutritionUsers)
+              ..where((u) => u.localSlot.equals(1)))
+            .write(const NutritionUsersCompanion(profileId: Value(1)));
+      });
 
   Future<ReminderSettings> loadReminders() async {
     final row = await database
