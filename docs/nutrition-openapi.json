@@ -1,0 +1,754 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Fitness nutrition sync contract",
+    "version": "1.0.0",
+    "description": "Contract only. Routes are not mounted until authentication and the sync transport are implemented."
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/v1/nutrition/sync/push": {
+      "post": {
+        "operationId": "pushNutrition",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "PushResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "SyncError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SyncError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "SyncError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "SyncError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/nutrition/sync/pull": {
+      "get": {
+        "operationId": "pullNutrition",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PullResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PullResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "SyncError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SyncError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "SyncError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "SyncError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "AppliedMutation": {
+        "additionalProperties": false,
+        "properties": {
+          "mutationId": {
+            "format": "uuid",
+            "title": "Mutationid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "entity": {
+            "enum": [
+              "product",
+              "meal",
+              "entry"
+            ],
+            "title": "Entity",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "mutationId",
+          "id",
+          "entity",
+          "version"
+        ],
+        "title": "AppliedMutation",
+        "type": "object"
+      },
+      "ChangeRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "entity": {
+            "enum": [
+              "product",
+              "meal",
+              "entry"
+            ],
+            "title": "Entity",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          },
+          "deletedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Deletedat"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProductData"
+              },
+              {
+                "$ref": "#/components/schemas/MealData"
+              },
+              {
+                "$ref": "#/components/schemas/EntryData"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          }
+        },
+        "required": [
+          "entity",
+          "id",
+          "version",
+          "updatedAt",
+          "data"
+        ],
+        "title": "ChangeRecord",
+        "type": "object"
+      },
+      "EntryData": {
+        "additionalProperties": false,
+        "properties": {
+          "mealId": {
+            "format": "uuid",
+            "title": "Mealid",
+            "type": "string"
+          },
+          "productId": {
+            "format": "uuid",
+            "title": "Productid",
+            "type": "string"
+          },
+          "grams": {
+            "exclusiveMinimum": 0,
+            "maximum": 10000,
+            "title": "Grams",
+            "type": "number"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/ProductSnapshot"
+          }
+        },
+        "required": [
+          "mealId",
+          "productId",
+          "grams",
+          "snapshot"
+        ],
+        "title": "EntryData",
+        "type": "object"
+      },
+      "EntryMutation": {
+        "additionalProperties": false,
+        "properties": {
+          "mutationId": {
+            "format": "uuid",
+            "title": "Mutationid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "operation": {
+            "enum": [
+              "upsert",
+              "delete"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "baseVersion": {
+            "minimum": 0,
+            "title": "Baseversion",
+            "type": "integer"
+          },
+          "clientRevision": {
+            "minimum": 1,
+            "title": "Clientrevision",
+            "type": "integer"
+          },
+          "entity": {
+            "const": "entry",
+            "title": "Entity",
+            "type": "string"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EntryData"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "mutationId",
+          "id",
+          "operation",
+          "baseVersion",
+          "clientRevision",
+          "entity"
+        ],
+        "title": "EntryMutation",
+        "type": "object"
+      },
+      "MealData": {
+        "additionalProperties": false,
+        "properties": {
+          "day": {
+            "format": "date",
+            "title": "Day",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "breakfast",
+              "lunch",
+              "dinner",
+              "snack"
+            ],
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "day",
+          "kind"
+        ],
+        "title": "MealData",
+        "type": "object"
+      },
+      "MealMutation": {
+        "additionalProperties": false,
+        "properties": {
+          "mutationId": {
+            "format": "uuid",
+            "title": "Mutationid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "operation": {
+            "enum": [
+              "upsert",
+              "delete"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "baseVersion": {
+            "minimum": 0,
+            "title": "Baseversion",
+            "type": "integer"
+          },
+          "clientRevision": {
+            "minimum": 1,
+            "title": "Clientrevision",
+            "type": "integer"
+          },
+          "entity": {
+            "const": "meal",
+            "title": "Entity",
+            "type": "string"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MealData"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "mutationId",
+          "id",
+          "operation",
+          "baseVersion",
+          "clientRevision",
+          "entity"
+        ],
+        "title": "MealMutation",
+        "type": "object"
+      },
+      "ProductData": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "calories": {
+            "maximum": 900,
+            "minimum": 0,
+            "title": "Calories",
+            "type": "number"
+          },
+          "protein": {
+            "maximum": 100.1,
+            "minimum": 0,
+            "title": "Protein",
+            "type": "number"
+          },
+          "fat": {
+            "maximum": 100.1,
+            "minimum": 0,
+            "title": "Fat",
+            "type": "number"
+          },
+          "carbs": {
+            "maximum": 100.1,
+            "minimum": 0,
+            "title": "Carbs",
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "calories",
+          "protein",
+          "fat",
+          "carbs"
+        ],
+        "title": "ProductData",
+        "type": "object"
+      },
+      "ProductMutation": {
+        "additionalProperties": false,
+        "properties": {
+          "mutationId": {
+            "format": "uuid",
+            "title": "Mutationid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "operation": {
+            "enum": [
+              "upsert",
+              "delete"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "baseVersion": {
+            "minimum": 0,
+            "title": "Baseversion",
+            "type": "integer"
+          },
+          "clientRevision": {
+            "minimum": 1,
+            "title": "Clientrevision",
+            "type": "integer"
+          },
+          "entity": {
+            "const": "product",
+            "title": "Entity",
+            "type": "string"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProductData"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "mutationId",
+          "id",
+          "operation",
+          "baseVersion",
+          "clientRevision",
+          "entity"
+        ],
+        "title": "ProductMutation",
+        "type": "object"
+      },
+      "ProductSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "calories": {
+            "maximum": 900,
+            "minimum": 0,
+            "title": "Calories",
+            "type": "number"
+          },
+          "protein": {
+            "maximum": 100.1,
+            "minimum": 0,
+            "title": "Protein",
+            "type": "number"
+          },
+          "fat": {
+            "maximum": 100.1,
+            "minimum": 0,
+            "title": "Fat",
+            "type": "number"
+          },
+          "carbs": {
+            "maximum": 100.1,
+            "minimum": 0,
+            "title": "Carbs",
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "calories",
+          "protein",
+          "fat",
+          "carbs",
+          "id"
+        ],
+        "title": "ProductSnapshot",
+        "type": "object"
+      },
+      "PullResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/ChangeRecord"
+            },
+            "title": "Changes",
+            "type": "array"
+          },
+          "nextCursor": {
+            "title": "Nextcursor",
+            "type": "string"
+          },
+          "hasMore": {
+            "title": "Hasmore",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "changes",
+          "nextCursor",
+          "hasMore"
+        ],
+        "title": "PullResponse",
+        "type": "object"
+      },
+      "PushRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "changes": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "entry": "#/components/schemas/EntryMutation",
+                  "meal": "#/components/schemas/MealMutation",
+                  "product": "#/components/schemas/ProductMutation"
+                },
+                "propertyName": "entity"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/ProductMutation"
+                },
+                {
+                  "$ref": "#/components/schemas/MealMutation"
+                },
+                {
+                  "$ref": "#/components/schemas/EntryMutation"
+                }
+              ]
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Changes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "changes"
+        ],
+        "title": "PushRequest",
+        "type": "object"
+      },
+      "PushResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "applied": {
+            "items": {
+              "$ref": "#/components/schemas/AppliedMutation"
+            },
+            "title": "Applied",
+            "type": "array"
+          },
+          "cursor": {
+            "title": "Cursor",
+            "type": "string"
+          }
+        },
+        "required": [
+          "applied",
+          "cursor"
+        ],
+        "title": "PushResponse",
+        "type": "object"
+      },
+      "SyncError": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "unauthorized",
+              "version_conflict",
+              "reference_missing",
+              "validation_error",
+              "cursor_expired"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "entityId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Entityid"
+          },
+          "canonicalId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Canonicalid"
+          },
+          "currentVersion": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Currentversion"
+          }
+        },
+        "required": [
+          "code",
+          "detail"
+        ],
+        "title": "SyncError",
+        "type": "object"
+      }
+    }
+  }
+}
