@@ -3,6 +3,7 @@ import '../core/db/app_database.dart';
 import '../models/goal.dart';
 import '../models/user_profile.dart';
 import '../models/reminder_settings.dart';
+import 'fitness_repository.dart';
 
 class ProfileRepository {
   ProfileRepository(this.database);
@@ -49,6 +50,22 @@ class ProfileRepository {
     await (database.update(database.syncUsers)
           ..where((u) => u.localSlot.equals(1) & u.profileId.isNull()))
         .write(const SyncUsersCompanion(profileId: Value(1)));
+    final records = FitnessRepository(database);
+    await records.save('profile', fitnessId('profile'), {
+      'name': profile.name.trim(),
+      'birthDate': profile.birthDate?.toIso8601String().substring(0, 10),
+      'sex': profile.sex.name,
+      'heightCm': profile.heightCm,
+      'weightKg': profile.weightKg,
+      'targetWeightKg': profile.targetWeightKg,
+      'activity': profile.activity.name,
+      'goal': profile.goal.name,
+      'programId': profile.programId,
+    });
+    await records.save('goal', fitnessId('goal'), {
+      'goal': profile.goal.name,
+      'targetWeightKg': profile.targetWeightKg,
+    });
   });
 
   Future<ReminderSettings> loadReminders() async {

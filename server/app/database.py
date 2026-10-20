@@ -1,7 +1,7 @@
 from functools import lru_cache
 
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, Session
 
 from app.config import get_settings
 
@@ -21,3 +21,8 @@ def get_engine():
 def check_database() -> None:
     with get_engine().connect() as connection:
         connection.execute(text("SELECT 1"))
+
+
+def get_session():
+    with Session(get_engine(), expire_on_commit=False) as session:
+        yield session

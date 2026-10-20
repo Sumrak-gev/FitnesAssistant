@@ -20,8 +20,8 @@ class User(Base):
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
-    email: Mapped[str] = mapped_column(String(320))
-    display_name: Mapped[str] = mapped_column(String(100))  # имя для обращения
+    email: Mapped[str] = mapped_column(String(320), unique=True)
+    display_name: Mapped[str] = mapped_column(String(100), default="", server_default="")
     password_hash: Mapped[str] = mapped_column(String(255))  # только хеш Argon2id
     is_active: Mapped[bool] = mapped_column(default=True, server_default=text("true"))
     created_at: Mapped[datetime] = mapped_column(

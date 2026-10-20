@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../core/db/app_database.dart';
+import '../../services/profile_controller.dart';
+import '../../models/user_profile.dart';
+import '../../core/api/api_client.dart';
+import '../../data/catalog_repository.dart';
 
 import '../../data/workout_repository.dart';
 import '../../models/exercise.dart';
@@ -7,8 +13,7 @@ import '../../models/program.dart';
 /// Экран каталога и управления тренировочными программами.
 ///
 /// Использует существующие Program, Exercise и WorkoutRepository.
-/// Изменения программ пока хранятся только в памяти приложения:
-/// для постоянного хранения потребуется отдельная интеграция с SQLite.
+/// Программы и замены сохраняются в Drift и общей очереди синхронизации.
 class WorkoutsScreen extends StatefulWidget {
   const WorkoutsScreen({super.key});
 
@@ -17,7 +22,7 @@ class WorkoutsScreen extends StatefulWidget {
 }
 
 class _WorkoutsScreenState extends State<WorkoutsScreen> {
-  final WorkoutRepository _repository = WorkoutRepository();
+  late final WorkoutRepository _repository;
   final TextEditingController _searchController = TextEditingController();
 
   List<Program> _programs = [];
@@ -55,6 +60,8 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
   @override
   void initState() {
     super.initState();
+    _repository = WorkoutRepository(context.read<AppDatabase>());
+    _activeProgramId = context.read<ProfileController>().profile.programId;
     _loadData();
   }
 
@@ -84,14 +91,34 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
     }
   }
 
+  Future<void> _importCatalog() async {
+    final api = context.read<ApiClient?>();
+    if (api == null) return;
+    try {
+      await CatalogRepository(
+        context.read<AppDatabase>(),
+        api,
+      ).importExercises();
+      await _loadData();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Нет связи. Каталог доступен офлайн.')),
+        );
+      }
+    }
+  }
+
   bool _exerciseMatches(Exercise exercise) {
     final query = _searchController.text.trim().toLowerCase();
-    final matchesQuery = query.isEmpty ||
+    final matchesQuery =
+        query.isEmpty ||
         exercise.name.toLowerCase().contains(query) ||
         exercise.muscleGroup.toLowerCase().contains(query) ||
         exercise.equipment.toLowerCase().contains(query);
 
-    final matchesEquipment = _selectedEquipment == 'Любое' ||
+    final matchesEquipment =
+        _selectedEquipment == 'Любое' ||
         exercise.equipment.toLowerCase() == _selectedEquipment.toLowerCase();
 
     final hasExcludedContraindication = exercise.contraindications.any(
@@ -110,7 +137,8 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
       final matchesGoal =
           _selectedGoal == 'Все цели' || program.targetGoal == _selectedGoal;
       final matchingExercises = _visibleExercises(program);
-      final matchesQuery = query.isEmpty ||
+      final matchesQuery =
+          query.isEmpty ||
           program.title.toLowerCase().contains(query) ||
           program.targetGoal.toLowerCase().contains(query) ||
           matchingExercises.isNotEmpty;
@@ -186,8 +214,9 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                       ),
                     ...currentProgram.exercises.map((exercise) {
                       final excluded = exercise.contraindications.any(
-                        (item) => _excludedContraindications
-                            .contains(item.toLowerCase()),
+                        (item) => _excludedContraindications.contains(
+                          item.toLowerCase(),
+                        ),
                       );
                       return Card(
                         child: ListTile(
@@ -211,7 +240,11 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                               await _replaceExercise(
                                 currentProgram,
                                 exercise,
-                                () => setSheetState(() {}),
+                                () {
+                                  if (sheetContext.mounted) {
+                                    setSheetState(() {});
+                                  }
+                                },
                               );
                               if (mounted) setState(() {});
                             },
@@ -221,7 +254,24 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                     }),
                     const SizedBox(height: 16),
                     FilledButton.icon(
-                      onPressed: () {
+                      onPressed: () async {
+                        final controller = this.context
+                            .read<ProfileController>();
+                        final p = controller.profile;
+                        await controller.saveProfile(
+                          UserProfile(
+                            name: p.name,
+                            birthDate: p.birthDate,
+                            sex: p.sex,
+                            heightCm: p.heightCm,
+                            weightKg: p.weightKg,
+                            targetWeightKg: p.targetWeightKg,
+                            activity: p.activity,
+                            goal: p.goal,
+                            programId: currentProgram.id,
+                          ),
+                        );
+                        if (!mounted || !sheetContext.mounted) return;
                         setState(() => _activeProgramId = currentProgram.id);
                         Navigator.of(sheetContext).pop();
                         ScaffoldMessenger.of(this.context).showSnackBar(
@@ -235,10 +285,30 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                       icon: const Icon(Icons.check_circle_outline),
                       label: const Text('Выбрать эту программу'),
                     ),
+                    FilledButton.tonalIcon(
+                      onPressed: currentProgram.exercises.isEmpty
+                          ? null
+                          : () async {
+                              await _repository.completeProgram(
+                                currentProgram,
+                                DateTime.now(),
+                              );
+                              if (!mounted || !sheetContext.mounted) return;
+                              Navigator.of(sheetContext).pop();
+                              ScaffoldMessenger.of(this.context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Выполнение программы сохранено',
+                                  ),
+                                ),
+                              );
+                            },
+                      icon: const Icon(Icons.done_all),
+                      label: const Text('Отметить выполнение программы'),
+                    ),
                     const SizedBox(height: 8),
                     Text(
-                      'Выбор программы и замена упражнений действуют в текущем '
-                      'сеансе приложения. Сохранение в SQLite пока не подключено.',
+                      'Выбор программы и замены сохраняются на устройстве и синхронизируются с аккаунтом.',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
@@ -301,7 +371,9 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
               (exercise) => ListTile(
                 leading: const Icon(Icons.fitness_center),
                 title: Text(exercise.name),
-                subtitle: Text('${exercise.muscleGroup} · ${exercise.equipment}'),
+                subtitle: Text(
+                  '${exercise.muscleGroup} · ${exercise.equipment}',
+                ),
                 onTap: () => Navigator.of(context).pop(exercise),
               ),
             ),
@@ -311,6 +383,11 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
     );
 
     if (selected == null || !mounted) return;
+
+    await _repository.saveProgram(
+      program.replaceExercise(oldExercise.id, selected),
+    );
+    if (!mounted) return;
 
     setState(() {
       final index = _programs.indexWhere((item) => item.id == program.id);
@@ -345,6 +422,11 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
         title: const Text('Тренировки'),
         actions: [
           IconButton(
+            tooltip: 'Загрузить каталог упражнений',
+            onPressed: _importCatalog,
+            icon: const Icon(Icons.cloud_download_outlined),
+          ),
+          IconButton(
             tooltip: 'Обновить список',
             onPressed: _isLoading ? null : _loadData,
             icon: const Icon(Icons.refresh),
@@ -354,226 +436,227 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? _ErrorView(message: _error!, onRetry: _loadData)
-              : RefreshIndicator(
-                  onRefresh: _loadData,
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
+          ? _ErrorView(message: _error!, onRetry: _loadData)
+          : RefreshIndicator(
+              onRefresh: _loadData,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  Text(
+                    'Подбери тренировку под свою цель',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Выбирай программу, изучай упражнения и при необходимости заменяй их.',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 18),
+                  TextField(
+                    controller: _searchController,
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
+                      labelText: 'Поиск программы или упражнения',
+                      hintText: 'Например, ноги или отжимания',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _searchController.text.isEmpty
+                          ? null
+                          : IconButton(
+                              tooltip: 'Очистить поиск',
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {});
+                              },
+                              icon: const Icon(Icons.close),
+                            ),
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: _selectedGoal,
+                    decoration: const InputDecoration(
+                      labelText: 'Цель тренировки',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: _goals
+                        .map(
+                          (goal) =>
+                              DropdownMenuItem(value: goal, child: Text(goal)),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _selectedGoal = value);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: _selectedEquipment,
+                    decoration: const InputDecoration(
+                      labelText: 'Оборудование',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: _equipmentOptions
+                        .map(
+                          (item) =>
+                              DropdownMenuItem(value: item, child: Text(item)),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _selectedEquipment = value);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Исключить ограничения',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Упражнения с отмеченными противопоказаниями будут скрыты.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: _contraindicationOptions.map((item) {
+                      final selected = _excludedContraindications.contains(
+                        item.toLowerCase(),
+                      );
+                      return FilterChip(
+                        label: Text(item),
+                        selected: selected,
+                        onSelected: (value) =>
+                            _toggleContraindication(item, value),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
                     children: [
-                      Text(
-                        'Подбери тренировку под свою цель',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Выбирай программу, изучай упражнения и при необходимости заменяй их.',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      const SizedBox(height: 18),
-                      TextField(
-                        controller: _searchController,
-                        onChanged: (_) => setState(() {}),
-                        decoration: InputDecoration(
-                          labelText: 'Поиск программы или упражнения',
-                          hintText: 'Например, ноги или отжимания',
-                          prefixIcon: const Icon(Icons.search),
-                          suffixIcon: _searchController.text.isEmpty
-                              ? null
-                              : IconButton(
-                                  tooltip: 'Очистить поиск',
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    setState(() {});
-                                  },
-                                  icon: const Icon(Icons.close),
-                                ),
-                          border: const OutlineInputBorder(),
+                      Expanded(
+                        child: Text(
+                          'Программы',
+                          style: Theme.of(context).textTheme.titleLarge,
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        value: _selectedGoal,
-                        decoration: const InputDecoration(
-                          labelText: 'Цель тренировки',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: _goals
-                            .map((goal) => DropdownMenuItem(
-                                  value: goal,
-                                  child: Text(goal),
-                                ))
-                            .toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() => _selectedGoal = value);
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        value: _selectedEquipment,
-                        decoration: const InputDecoration(
-                          labelText: 'Оборудование',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: _equipmentOptions
-                            .map((item) => DropdownMenuItem(
-                                  value: item,
-                                  child: Text(item),
-                                ))
-                            .toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() => _selectedEquipment = value);
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Исключить ограничения',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Упражнения с отмеченными противопоказаниями будут скрыты.',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        children: _contraindicationOptions.map((item) {
-                          final selected = _excludedContraindications
-                              .contains(item.toLowerCase());
-                          return FilterChip(
-                            label: Text(item),
-                            selected: selected,
-                            onSelected: (value) =>
-                                _toggleContraindication(item, value),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'Программы',
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                          ),
-                          Text('${programs.length}'),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      if (programs.isEmpty)
-                        const _EmptyView()
-                      else
-                        ...programs.map((program) {
-                          final exercises = _visibleExercises(program);
-                          final isActive = _activeProgramId == program.id;
-                          return Card(
-                            clipBehavior: Clip.antiAlias,
-                            child: InkWell(
-                              onTap: () => _showProgramDetails(program),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: BoxDecoration(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .secondaryContainer,
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                          ),
-                                          child: Icon(
-                                            Icons.fitness_center,
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSecondaryContainer,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                program.title,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .titleMedium,
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text('Цель: ${program.targetGoal}'),
-                                              Text(
-                                                '${exercises.length} упражнений подходят под фильтры',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodySmall,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const Icon(Icons.chevron_right),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Wrap(
-                                      spacing: 6,
-                                      runSpacing: 4,
-                                      children: exercises.take(3).map((exercise) {
-                                        return Chip(
-                                          visualDensity: VisualDensity.compact,
-                                          label: Text(exercise.name),
-                                        );
-                                      }).toList(),
-                                    ),
-                                    if (isActive) ...[
-                                      const SizedBox(height: 8),
-                                      const Row(
-                                        children: [
-                                          Icon(Icons.check_circle,
-                                              color: Colors.green, size: 18),
-                                          SizedBox(width: 6),
-                                          Text('Выбрана'),
-                                        ],
-                                      ),
-                                    ],
-                                    const SizedBox(height: 8),
-                                    Align(
-                                      alignment: Alignment.centerRight,
-                                      child: TextButton.icon(
-                                        onPressed: () =>
-                                            _showProgramDetails(program),
-                                        icon: const Icon(Icons.open_in_new),
-                                        label: const Text('Подробнее'),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
-                      const SizedBox(height: 20),
-                      Text(
-                        'Каталог содержит демонстрационные данные. Чтобы выбор и '
-                        'замены сохранялись после перезапуска, нужно подключить SQLite.',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
+                      Text('${programs.length}'),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  if (programs.isEmpty)
+                    const _EmptyView()
+                  else
+                    ...programs.map((program) {
+                      final exercises = _visibleExercises(program);
+                      final isActive = _activeProgramId == program.id;
+                      return Card(
+                        clipBehavior: Clip.antiAlias,
+                        child: InkWell(
+                          onTap: () => _showProgramDetails(program),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.secondaryContainer,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Icon(
+                                        Icons.fitness_center,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSecondaryContainer,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            program.title,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.titleMedium,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text('Цель: ${program.targetGoal}'),
+                                          Text(
+                                            '${exercises.length} упражнений подходят под фильтры',
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodySmall,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const Icon(Icons.chevron_right),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 4,
+                                  children: exercises.take(3).map((exercise) {
+                                    return Chip(
+                                      visualDensity: VisualDensity.compact,
+                                      label: Text(exercise.name),
+                                    );
+                                  }).toList(),
+                                ),
+                                if (isActive) ...[
+                                  const SizedBox(height: 8),
+                                  const Row(
+                                    children: [
+                                      Icon(
+                                        Icons.check_circle,
+                                        color: Colors.green,
+                                        size: 18,
+                                      ),
+                                      SizedBox(width: 6),
+                                      Text('Выбрана'),
+                                    ],
+                                  ),
+                                ],
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton.icon(
+                                    onPressed: () =>
+                                        _showProgramDetails(program),
+                                    icon: const Icon(Icons.open_in_new),
+                                    label: const Text('Подробнее'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Каталог доступен офлайн. Изменения программ сохраняются автоматически.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
     );
   }
 }

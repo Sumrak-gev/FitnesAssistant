@@ -1,58 +1,84 @@
+import 'dart:convert';
+import 'package:drift/drift.dart';
+import '../core/db/app_database.dart';
 import '../models/day_log.dart';
+import '../models/daily_ration.dart';
 import '../utils/date_helpers.dart';
+import 'fitness_repository.dart';
+import 'nutrition_repository.dart';
 
-/// TODO: заменить in-memory реализацию на Drift (по образцу NutritionRepository).
 class ProgressRepository {
-  ProgressRepository._(this._logs);
+  ProgressRepository(this.database) : _records = FitnessRepository(database);
+  final AppDatabase database;
+  final FitnessRepository _records;
 
-  /// Пустая история.
-  factory ProgressRepository.empty() => ProgressRepository._({});
-
-  /// Демонстрационная история за 8 недель: тренировки по пн/ср/пт,
-  /// одна «просевшая» неделя 3 недели назад и разброс по калориям.
-  /// Сегодняшний день пустой — тренировку можно отметить на экране.
-  factory ProgressRepository.demo({
-    required double dailyTarget,
-    DateTime? today,
-  }) {
-    final end = dateOnly(today ?? DateTime.now());
-    final thisWeek = startOfWeek(end);
-    const offsets = [-80, 120, 40, 350, -60, 90, 10, -150, 260, 30];
+  Future<List<DayLog>> getLogs() async {
+    final rows = await _records.rows('progress');
     final logs = <DateTime, DayLog>{};
-
-    for (var i = 1; i <= 56; i++) {
-      final date = addDays(end, -i);
-      final weeksBack =
-          (thisWeek.difference(startOfWeek(date)).inHours / (24 * 7)).round();
-      final trainingDay = date.weekday == DateTime.monday ||
-          date.weekday == DateTime.wednesday ||
-          date.weekday == DateTime.friday;
-      final skipped = weeksBack == 3 && date.weekday == DateTime.friday;
-      final calories = i % 11 == 6
-          ? null
-          : (dailyTarget + offsets[i % offsets.length]).roundToDouble();
-      logs[date] = DayLog(
-        date: date,
-        workoutDone: trainingDay && !skipped,
-        caloriesConsumed: calories,
+    for (final row in rows) {
+      final data = jsonDecode(row.data) as Map<String, dynamic>;
+      final day = DateTime.parse(data['day'] as String);
+      logs[day] = DayLog(
+        date: day,
+        workoutDone: data['workoutDone'] as bool,
+        caloriesConsumed: (data['caloriesConsumed'] as num?)?.toDouble(),
       );
     }
-    return ProgressRepository._(logs);
+    final owner = await NutritionRepository(database).userId();
+    final meals = await (database.select(
+      database.nutritionMeals,
+    )..where((m) => m.userId.equals(owner) & m.deletedAt.isNull())).get();
+    final entries = await (database.select(
+      database.nutritionEntries,
+    )..where((e) => e.userId.equals(owner) & e.deletedAt.isNull())).get();
+    final totals = <DateTime, double>{};
+    final dates = {for (final meal in meals) meal.id: DateTime.parse(meal.day)};
+    for (final entry in entries) {
+      final day = dates[entry.mealId];
+      if (day != null) {
+        totals[day] = (totals[day] ?? 0) + entry.calories * entry.grams / 100;
+      }
+    }
+    for (final entry in totals.entries) {
+      logs[entry.key] = (logs[entry.key] ?? DayLog(date: entry.key)).copyWith(
+        caloriesConsumed: entry.value,
+      );
+    }
+    return logs.values.toList();
   }
 
-  final Map<DateTime, DayLog> _logs;
+  Future<void> _save(DateTime date, {bool? workout, double? calories}) =>
+      database.transaction(() async {
+        final key = dateOnly(date);
+        if (key.year < 1900 || key.year > 2100) {
+          throw ArgumentError('Проверьте дату записи.');
+        }
+        final id = fitnessId('progress:${nutritionDay(key)}');
+        final old = (await _records.rows(
+          'progress',
+        )).where((r) => r.id == id).firstOrNull;
+        final data = old == null
+            ? <String, dynamic>{}
+            : jsonDecode(old.data) as Map<String, dynamic>;
+        await _records.save('progress', id, {
+          'day': nutritionDay(key),
+          'workoutDone': workout ?? data['workoutDone'] ?? false,
+          'caloriesConsumed': calories ?? data['caloriesConsumed'],
+        });
+        if (workout == true) {
+          await _records.save(
+            'achievement',
+            fitnessId('achievement:first_workout'),
+            {'key': 'first_workout', 'unlocked': true},
+          );
+        }
+      });
 
-  Future<List<DayLog>> getLogs() async => _logs.values.toList();
-
-  Future<void> markWorkout(DateTime date) async {
-    final key = dateOnly(date);
-    final existing = _logs[key] ?? DayLog(date: key);
-    _logs[key] = existing.copyWith(workoutDone: true);
-  }
-
-  Future<void> logCalories(DateTime date, double calories) async {
-    final key = dateOnly(date);
-    final existing = _logs[key] ?? DayLog(date: key);
-    _logs[key] = existing.copyWith(caloriesConsumed: calories);
+  Future<void> markWorkout(DateTime date) => _save(date, workout: true);
+  Future<void> logCalories(DateTime date, double calories) {
+    if (!calories.isFinite || calories < 0 || calories > 100000) {
+      throw ArgumentError('Проверьте калории.');
+    }
+    return _save(date, calories: calories);
   }
 }

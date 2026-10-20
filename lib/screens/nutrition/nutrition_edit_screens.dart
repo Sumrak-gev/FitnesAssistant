@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../core/api/api_client.dart';
+import '../../data/catalog_repository.dart';
 import 'package:uuid/uuid.dart';
 import '../../data/nutrition_repository.dart';
 import '../../models/daily_ration.dart';
@@ -44,6 +47,40 @@ class ProductCatalogScreen extends StatefulWidget {
 class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
   late Future<List<Product>> _data = widget.repository.products();
   String _query = '';
+  bool _importing = false;
+  Future<void> _import() async {
+    final api = context.read<ApiClient?>();
+    if (api == null) return;
+    setState(() => _importing = true);
+    try {
+      final count = await CatalogRepository(
+        widget.repository.database,
+        api,
+      ).importProducts(_query);
+      if (mounted) {
+        _refresh();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              count == 0
+                  ? 'Каталог пуст. Добавьте свой продукт или повторите после импорта на сервере.'
+                  : 'Продукты сохранены для работы офлайн',
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        showNutritionError(
+          context,
+          'Каталог недоступен. Локальные продукты сохранены.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _importing = false);
+    }
+  }
+
   void _refresh() => setState(() {
     _data = widget.repository.products();
   });
@@ -75,7 +112,16 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Продукты')),
+    appBar: AppBar(
+      title: const Text('Продукты'),
+      actions: [
+        IconButton(
+          tooltip: 'Загрузить из каталога',
+          onPressed: _importing ? null : _import,
+          icon: const Icon(Icons.cloud_download_outlined),
+        ),
+      ],
+    ),
     floatingActionButton: FloatingActionButton(
       tooltip: 'Новый продукт',
       onPressed: () => _edit(),

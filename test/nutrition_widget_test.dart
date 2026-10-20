@@ -51,6 +51,7 @@ void main() {
   });
 
   Future<void> launch(WidgetTester tester) async {
+    await repo.seedIfEmpty();
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -215,6 +216,8 @@ void main() {
       expect(find.text('Применить настройки'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
+      await tester
+          .pump(); // Flush Drift's stream disposal before closing the database.
     },
   );
 
@@ -247,6 +250,7 @@ void main() {
       expect(find.textContaining('БЖУ суммарно'), findsOneWidget);
       expect(await repo.products(query: 'Ошибка'), isEmpty);
       await tester.pumpWidget(const SizedBox());
+      await tester.pump();
     },
   );
 }

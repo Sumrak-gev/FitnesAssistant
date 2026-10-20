@@ -25,6 +25,9 @@ android/captures/
 android/key.properties
 *.jks
 *.keystore
+*.p12
+*.pfx
+*.key
 .kotlin/
 
 # iOS
@@ -52,3 +55,5 @@ __pycache__/
 *.sqlite3
 *.db
 *.egg-info/
+.runtime/
+*.symbols

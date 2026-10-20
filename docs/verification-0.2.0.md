@@ -1,0 +1,39 @@
+# Проверка версии 0.2.0 — 20 октября 2026
+
+Основа: main (8eca4cfc). Целевая ветка: Drevniy_Jomolungmik.
+Среда: Windows, Flutter 3.47.7 / Dart 3.13.5, Python 3.12, отдельный PostgreSQL 18.
+
+| Проверка | Результат |
+| --- | --- |
+| flutter analyze | Без замечаний |
+| flutter test с TEST_API_URL | 77 тестов прошли, включая настоящий API и две базы Drift |
+| pytest на fitness_test | 49 тестов прошли |
+| Alembic upgrade head / check | Схема соответствует моделям, одна цепочка 0001 → 0002 → 0003 |
+| Обновление заполненной v2 БД | Проверено в отдельной временной схеме, включая удалённый продукт и живой снимок порции |
+| Генерация Drift | Повторная генерация даёт тот же app_database.g.dart |
+| Docker Compose config | Успешно |
+| Роли приложения/миграций | Проверены на временной БД: приложение без SUPERUSER/CREATEDB/CREATEROLE и без CREATE в public, DML работает |
+| pg_dump / pg_restore | Архив проверен и восстановлен в отдельную БД |
+| Импорт реальных каталогов | 876 упражнений; 81 продукт OFF, 18 неполных продуктов пропущены |
+| Android debug APK | Собран, API_URL=http://10.0.2.2:8000 |
+| Android release APK, arm64 | Собран с R8, --obfuscate, --split-debug-info, временной тестовой подписью |
+| apksigner verify | Подпись release корректна (v2), один подписант |
+| Манифест release | ru.fitnesassistant.app, 0.2.0+2, minSdk 24, targetSdk 36, INTERNET, cleartext=false, backup=false |
+| Итоговая libapp.so | DWARF-секций нет; исходное имя FitnessAssistantApp отсутствует |
+
+Проверки обмена включают потерянный ответ после server commit, сохранение следующей локальной правки,
+квитанции идемпотентности, объединение слота питания, конфликты и выбор версии, изоляцию пользователей.
+Отдельно проверены конкурирующий refresh и выход во время фонового refresh: сессия не восстанавливается
+запоздавшим ответом.
+
+Release собран для проверки конвейера, с тестовым HTTPS-адресом api.example.com.
+Тестовый ключ и symbols не включены в Git; временный android/key.properties удалён.
+Для распространения необходимы собственные keystore и HTTPS API_URL.
+
+Физическое Android-устройство, фактическая доставка уведомлений, запуск WorkManager ОС и настоящий
+HTTPS-домен не проверялись. Docker daemon в этой среде отсутствует: проверена конфигурация Compose,
+а API, роли, миграции, импорт и backup/restore проверены непосредственно на PostgreSQL.
+Ручные шаги: [приёмка Android](github-prealpha-release.md).
+
+При сборке Flutter 3.47.7 предупреждает о старом KGP в workmanager_android; текущая сборка проходит.
+Перед обновлением Flutter проверьте совместимость плагина с Built-in Kotlin.

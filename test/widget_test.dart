@@ -62,6 +62,7 @@ void main() {
     expect(find.text('Похудение'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
+    await tester.pump(); // Flush Drift's zero-delay stream cancellation timer.
   });
 
   testWidgets('Invalid measurements show errors; decimals with comma persist', (
@@ -96,6 +97,7 @@ void main() {
     expect(find.text('Профиль сохранён'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
+    await tester.pump();
   });
 
   testWidgets('Empty fields above the scroll position still prevent saving', (
@@ -116,6 +118,7 @@ void main() {
     expect(find.text('Введите число от 20 до 500'), findsOneWidget);
     expect((await database.select(database.localProfiles).get()), isEmpty);
     await tester.pumpWidget(const SizedBox());
+    await tester.pump();
   });
 
   for (final document in LegalDocument.values) {

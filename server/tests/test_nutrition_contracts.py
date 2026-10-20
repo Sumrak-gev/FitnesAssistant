@@ -12,7 +12,7 @@ def product_change(**overrides):
       'data': {'name': 'Рис', 'calories': 130, 'protein': 2.7, 'fat': .3, 'carbs': 28}, **overrides}
 
 @pytest.mark.parametrize('field,value', [('calories', -1), ('calories', 901), ('protein', float('nan')),
-  ('fat', float('inf')), ('name', '  '), ('carbs', 101)])
+  ('fat', float('inf')), ('name', '  '), ('carbs', 101), ('calories', '130'), ('protein', True)])
 def test_contract_invalid_product(field, value):
     data = product_change()['data']; data[field] = value
     with pytest.raises(ValidationError): ProductData.model_validate(data)
@@ -41,7 +41,8 @@ def test_exported_openapi_is_current_and_every_ref_resolves():
     path = Path(__file__).resolve().parents[2] / 'docs/nutrition-openapi.json'
     saved = json.loads(path.read_text(encoding='utf-8'))
     assert saved == build_contract()
-    assert 'Contract only' in saved['info']['description']
+    assert '/sync/push' in saved['paths']
+    assert '/auth/register' in saved['paths']
     def visit(node):
         if isinstance(node, dict):
             if '$ref' in node:

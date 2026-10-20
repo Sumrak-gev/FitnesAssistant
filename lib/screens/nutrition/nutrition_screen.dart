@@ -25,11 +25,10 @@ class _NutritionScreenState extends State<NutritionScreen> {
   void initState() {
     super.initState();
     _repository = NutritionRepository(context.read<AppDatabase>());
-    _data = _load(seed: true);
+    _data = _load();
   }
 
-  Future<List<DailyRation>> _load({bool seed = false}) async {
-    if (seed) await _repository.seedIfEmpty();
+  Future<List<DailyRation>> _load() async {
     return _repository.days(_service.weekStart(_day), 7);
   }
 

@@ -292,7 +292,7 @@ void main() {
         expect(
           (await migrated.customSelect('PRAGMA user_version').getSingle())
               .read<int>('user_version'),
-          3,
+          4,
         );
         final indexes = await migrated
             .customSelect(

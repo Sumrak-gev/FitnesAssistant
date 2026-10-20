@@ -25,5 +25,8 @@ def test_readiness_failure_hides_secrets(monkeypatch):
     assert "SECRET" not in response.text
 
 
-def test_openapi_exposes_health_only():
-    assert set(client.get("/openapi.json").json()["paths"]) == {"/health", "/health/db"}
+def test_openapi_exposes_authenticated_routes():
+    paths = client.get("/openapi.json").json()["paths"]
+    assert {"/health", "/health/db", "/auth/register", "/auth/login", "/auth/refresh",
+            "/auth/logout", "/sync/push", "/sync/pull", "/products", "/exercises"} <= set(paths)
+    assert paths['/sync/push']['post']['security'] == [{'HTTPBearer': []}]

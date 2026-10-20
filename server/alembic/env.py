@@ -1,5 +1,9 @@
 from alembic import context
+from pathlib import Path
+import sys
 from sqlalchemy import create_engine, pool
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.config import get_settings
 from app.database import Base

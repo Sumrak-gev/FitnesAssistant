@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'core/db/app_database.dart';
+import 'core/api/api_client.dart';
+import 'core/sync/sync_engine.dart';
+import 'core/sync/background_sync.dart';
+import 'core/sync/database_lease.dart';
+import 'screens/auth/auth_screen.dart';
 import 'data/profile_repository.dart';
 import 'services/profile_controller.dart';
 import 'services/reminder_service.dart';
@@ -12,7 +17,13 @@ import 'screens/goals/goals_screen.dart';
 import 'screens/progress/progress_screen.dart';
 import 'screens/achievements/achievements_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await initializeBackgroundSync();
+  } catch (_) {
+    debugPrint('Фоновая синхронизация недоступна');
+  }
   runApp(const FitnessAssistantApp());
 }
 
@@ -28,6 +39,8 @@ class _FitnessAssistantAppState extends State<FitnessAssistantApp>
     with WidgetsBindingObserver {
   AppDatabase? _database;
   late final ProfileController _profile;
+  ApiClient? _api;
+  SyncEngine? _sync;
 
   @override
   void initState() {
@@ -40,16 +53,35 @@ class _FitnessAssistantAppState extends State<FitnessAssistantApp>
           LocalReminderService(),
         );
     _profile.load();
+    if (widget.profileController == null) {
+      _api = ApiClient(
+        refreshGuard: DatabaseLease(
+          _profile.repository.database,
+          'refresh',
+        ).guardRefresh,
+      );
+      _sync = SyncEngine(
+        _profile.repository.database,
+        _api!,
+        onDataChanged: _profile.load,
+      );
+      _api!.restore();
+    }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _profile.reconcileReminders();
+    if (state == AppLifecycleState.resumed) {
+      _profile.reconcileReminders();
+      _sync?.synchronize();
+    }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _sync?.dispose();
+    _api?.dispose();
     if (widget.profileController == null) _profile.dispose();
     _database?.close();
     super.dispose();
@@ -61,6 +93,8 @@ class _FitnessAssistantAppState extends State<FitnessAssistantApp>
       providers: [
         Provider<AppDatabase>.value(value: _profile.repository.database),
         ChangeNotifierProvider<ProfileController>.value(value: _profile),
+        ChangeNotifierProvider<ApiClient?>.value(value: _api),
+        ChangeNotifierProvider<SyncEngine?>.value(value: _sync),
       ],
       child: MaterialApp(
         title: 'Фитнес-помощник',
@@ -69,7 +103,20 @@ class _FitnessAssistantAppState extends State<FitnessAssistantApp>
         supportedLocales: const [Locale('ru')],
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         theme: ThemeData(colorSchemeSeed: Colors.teal, useMaterial3: true),
-        home: const RootScreen(),
+        home: _api == null
+            ? const RootScreen()
+            : Consumer<ApiClient?>(
+                builder: (context, api, _) {
+                  if (!api!.restored) {
+                    return const Scaffold(
+                      body: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  return api.session == null
+                      ? AuthScreen(api: api, repository: _profile.repository)
+                      : const RootScreen();
+                },
+              ),
       ),
     );
   }
@@ -97,8 +144,74 @@ class _RootScreenState extends State<RootScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final sync = context.watch<SyncEngine?>();
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _screens),
+      body: Column(
+        children: [
+          if (sync != null)
+            SafeArea(
+              bottom: false,
+              child: Material(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              sync.status,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Синхронизировать',
+                            onPressed: sync.synchronize,
+                            icon: const Icon(Icons.sync),
+                          ),
+                          IconButton(
+                            tooltip: 'Выйти',
+                            onPressed: () =>
+                                context.read<ApiClient?>()!.logout(),
+                            icon: const Icon(Icons.logout),
+                          ),
+                        ],
+                      ),
+                      if (sync.conflict != null)
+                        Wrap(
+                          spacing: 8,
+                          children: [
+                            if (sync.conflict?['canKeepLocal'] == true)
+                              TextButton(
+                                onPressed: () =>
+                                    sync.resolveConflict(keepLocal: true),
+                                child: const Text('Оставить локальную версию'),
+                              ),
+                            TextButton(
+                              onPressed: () =>
+                                  sync.resolveConflict(keepLocal: false),
+                              child: const Text('Принять с сервера'),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          Expanded(
+            child: IndexedStack(
+              key: ValueKey(sync?.generation),
+              index: _currentIndex,
+              children: _screens,
+            ),
+          ),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) => setState(() => _currentIndex = index),

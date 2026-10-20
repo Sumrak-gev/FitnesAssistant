@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:provider/provider.dart';
+import '../../core/db/app_database.dart';
+import '../../services/profile_controller.dart';
 import '../../data/progress_repository.dart';
-import '../../models/goal.dart';
 import '../../models/streak.dart';
 import '../../models/weekly_summary.dart';
 import '../../services/nutrition_service.dart';
 import '../../services/progress_service.dart';
+import '../../services/achievement_service.dart';
 import '../../utils/date_helpers.dart';
 import '../../utils/ru_plural.dart';
 import '../../widgets/section_card.dart';
@@ -21,7 +25,12 @@ class _ProgressScreenState extends State<ProgressScreen> {
   static const _workoutGoal = 3;
   static const _dayLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
-  late final double _dailyTarget;
+  double? _dailyTarget;
+  bool _loaded = false;
+  bool _todayDone = false;
+  int _totalWorkouts = 0;
+  StreamSubscription<Object?>? _changes;
+  late final ProfileController _profile;
   late final ProgressRepository _repository;
   final _service = ProgressService();
   ProgressSnapshot? _snapshot;
@@ -29,31 +38,55 @@ class _ProgressScreenState extends State<ProgressScreen> {
   @override
   void initState() {
     super.initState();
-    // Тот же пример параметров, что и на экране КБЖУ — профиль пока не подключён.
-    _dailyTarget = NutritionService()
-        .calculateNorm(
-          weightKg: 75,
-          heightCm: 178,
-          age: 22,
-          isMale: true,
-          goal: GoalType.maintenance,
-        )
-        .calories;
-    _repository = ProgressRepository.demo(dailyTarget: _dailyTarget);
+    _profile = context.read<ProfileController>();
+    _profile.addListener(_reload);
+    _repository = ProgressRepository(context.read<AppDatabase>());
+    _changes = _repository.database.tableUpdates().listen((_) => _load());
     _load();
+  }
+
+  void _reload() {
+    if (_profile.loaded) _load();
+  }
+
+  @override
+  void dispose() {
+    _profile.removeListener(_reload);
+    _changes?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {
     final logs = await _repository.getLogs();
     if (!mounted) return;
     setState(() {
-      _snapshot = _service.build(
-        logs: logs,
-        today: dateOnly(DateTime.now()),
-        dailyTarget: _dailyTarget,
-        workoutGoal: _workoutGoal,
+      _loaded = true;
+      _todayDone = logs.any(
+        (l) => l.workoutDone && l.date == dateOnly(DateTime.now()),
       );
+      _totalWorkouts = logs.where((l) => l.workoutDone).length;
+      try {
+        _dailyTarget = NutritionService()
+            .normForProfile(_profile.profile)
+            .calories;
+      } on ArgumentError {
+        _dailyTarget = null;
+      }
+      _snapshot = _dailyTarget == null
+          ? null
+          : _service.build(
+              logs: logs,
+              today: dateOnly(DateTime.now()),
+              dailyTarget: _dailyTarget!,
+              workoutGoal: _workoutGoal,
+            );
     });
+    if (_snapshot != null) {
+      await AchievementService().awardProgress(
+        _repository.database,
+        _snapshot!,
+      );
+    }
   }
 
   Future<void> _markWorkoutToday() async {
@@ -73,8 +106,25 @@ class _ProgressScreenState extends State<ProgressScreen> {
     final snapshot = _snapshot;
     return Scaffold(
       appBar: AppBar(title: const Text('Прогресс')),
-      body: snapshot == null
+      body: !_loaded
           ? const Center(child: CircularProgressIndicator())
+          : snapshot == null
+          ? ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                const Text('Заполните профиль для расчёта баланса питания.'),
+                const SizedBox(height: 16),
+                Text('Отмечено тренировок: $_totalWorkouts'),
+                FilledButton(
+                  onPressed: _todayDone ? null : _markWorkoutToday,
+                  child: Text(
+                    _todayDone
+                        ? 'Тренировка сегодня отмечена'
+                        : 'Отметить тренировку сегодня',
+                  ),
+                ),
+              ],
+            )
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
@@ -86,9 +136,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 FilledButton.icon(
                   onPressed: _workoutDoneToday ? null : _markWorkoutToday,
                   icon: const Icon(Icons.check),
-                  label: Text(_workoutDoneToday
-                      ? 'Тренировка сегодня отмечена'
-                      : 'Отметить тренировку сегодня'),
+                  label: Text(
+                    _workoutDoneToday
+                        ? 'Тренировка сегодня отмечена'
+                        : 'Отметить тренировку сегодня',
+                  ),
                 ),
               ],
             ),
@@ -121,8 +173,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(level.title, style: theme.textTheme.titleMedium),
-                    Text('${level.totalXp} XP · ${s.totalWorkouts} '
-                        '${pluralRu(s.totalWorkouts, 'тренировка', 'тренировки', 'тренировок')}'),
+                    Text(
+                      '${level.totalXp} XP · ${s.totalWorkouts} '
+                      '${pluralRu(s.totalWorkouts, 'тренировка', 'тренировки', 'тренировок')}',
+                    ),
                   ],
                 ),
               ),
@@ -176,8 +230,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(s.currentWeekHeadline,
-              style: Theme.of(context).textTheme.bodyLarge),
+          Text(
+            s.currentWeekHeadline,
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
           const SizedBox(height: 12),
           _DayStrip(week: week, labels: _dayLabels),
           const SizedBox(height: 12),
@@ -194,11 +250,15 @@ class _ProgressScreenState extends State<ProgressScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(s.previousWeekHeadline,
-              style: Theme.of(context).textTheme.bodyLarge),
+          Text(
+            s.previousWeekHeadline,
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
           const SizedBox(height: 4),
-          Text(s.previousWeekComparison,
-              style: Theme.of(context).textTheme.bodySmall),
+          Text(
+            s.previousWeekComparison,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
           const SizedBox(height: 12),
           _WeekStats(week: week),
         ],

@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'nutrition_tables.dart';
 import 'sync_tables.dart';
+import 'fitness_tables.dart';
 
 part 'app_database.g.dart';
 
@@ -43,6 +44,9 @@ class LocalReminders extends Table {
     NutritionMeals,
     NutritionEntries,
     SyncOutbox,
+    FitnessRecords,
+    AppSettings,
+    ExerciseCatalog,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -50,7 +54,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'fitness_assistant'));
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -70,7 +74,16 @@ class AppDatabase extends _$AppDatabase {
         // v3: очередь стала общей для модулей — снимаем жёсткий CHECK по списку сущностей.
         await migrator.alterTable(TableMigration(syncOutbox));
       }
+      if (from < 4) {
+        await migrator.createTable(fitnessRecords);
+        await migrator.createTable(appSettings);
+        await migrator.createTable(exerciseCatalog);
+      }
     }),
-    beforeOpen: (_) => customStatement('PRAGMA foreign_keys = ON'),
+    beforeOpen: (_) async {
+      await customStatement('PRAGMA foreign_keys = ON');
+      await customStatement('PRAGMA busy_timeout = 5000');
+      await customStatement('PRAGMA journal_mode = WAL');
+    },
   );
 }

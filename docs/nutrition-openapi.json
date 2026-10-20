@@ -1,76 +1,94 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Fitness nutrition sync contract",
-    "version": "1.0.0",
-    "description": "Contract only. Routes are not mounted until authentication and the sync transport are implemented."
+    "title": "Fitness Assistant API",
+    "version": "0.2.0"
   },
-  "security": [
-    {
-      "bearerAuth": []
-    }
-  ],
   "paths": {
-    "/v1/nutrition/sync/push": {
+    "/auth/register": {
       "post": {
-        "operationId": "pushNutrition",
+        "tags": [
+          "auth"
+        ],
+        "summary": "Register",
+        "operationId": "register_auth_register_post",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PushRequest"
+                "$ref": "#/components/schemas/RegisterInput"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
-          "200": {
-            "description": "PushResponse",
+          "201": {
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PushResponse"
+                  "$ref": "#/components/schemas/TokenResponse"
                 }
               }
             }
           },
           "401": {
-            "description": "SyncError",
+            "description": "Unauthorized",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SyncError"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
           },
           "409": {
-            "description": "SyncError",
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SyncError"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
           },
           "410": {
-            "description": "SyncError",
+            "description": "Gone",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SyncError"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
           },
           "422": {
-            "description": "SyncError",
+            "description": "Unprocessable Entity",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SyncError"
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -78,75 +96,895 @@
         }
       }
     },
-    "/v1/nutrition/sync/pull": {
-      "get": {
-        "operationId": "pullNutrition",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "cursor",
-            "schema": {
-              "type": "string"
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login",
+        "operationId": "login_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthInput"
+              }
             }
           },
-          {
-            "in": "query",
-            "name": "limit",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 500,
-              "default": 100
-            }
-          }
-        ],
+          "required": true
+        },
         "responses": {
           "200": {
-            "description": "PullResponse",
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PullResponse"
+                  "$ref": "#/components/schemas/TokenResponse"
                 }
               }
             }
           },
           "401": {
-            "description": "SyncError",
+            "description": "Unauthorized",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SyncError"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
           },
           "409": {
-            "description": "SyncError",
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SyncError"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
           },
           "410": {
-            "description": "SyncError",
+            "description": "Gone",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SyncError"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
           },
           "422": {
-            "description": "SyncError",
+            "description": "Unprocessable Entity",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SyncError"
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Refresh",
+        "operationId": "refresh_auth_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Logout",
+        "operationId": "logout_auth_logout_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sync/push": {
+      "post": {
+        "tags": [
+          "sync"
+        ],
+        "summary": "Push",
+        "operationId": "push_sync_push_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncPush"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncPushResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/sync/pull": {
+      "get": {
+        "tags": [
+          "sync"
+        ],
+        "summary": "Pull",
+        "operationId": "pull_sync_pull_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "0",
+              "title": "Since"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncPullResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
+    },
+    "/products": {
+      "get": {
+        "tags": [
+          "sync",
+          "catalogs"
+        ],
+        "summary": "Products",
+        "operationId": "products_products_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 120,
+              "default": "",
+              "title": "Q"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100000,
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
+    },
+    "/exercises": {
+      "get": {
+        "tags": [
+          "sync",
+          "catalogs"
+        ],
+        "summary": "Exercises",
+        "operationId": "exercises_exercises_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 120,
+              "default": "",
+              "title": "Q"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100000,
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health",
+        "description": "Liveness: this process can serve requests without a database connection.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/db": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Database Health",
+        "description": "Readiness: verify the configured PostgreSQL connection.",
+        "operationId": "database_health_health_db_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -156,186 +994,218 @@
     }
   },
   "components": {
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT"
-      }
-    },
     "schemas": {
-      "AppliedMutation": {
-        "additionalProperties": false,
+      "AchievementData": {
         "properties": {
-          "mutationId": {
-            "format": "uuid",
-            "title": "Mutationid",
-            "type": "string"
+          "key": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Key"
           },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "entity": {
-            "enum": [
-              "product",
-              "meal",
-              "entry"
-            ],
-            "title": "Entity",
-            "type": "string"
-          },
-          "version": {
-            "minimum": 1,
-            "title": "Version",
-            "type": "integer"
+          "unlocked": {
+            "type": "boolean",
+            "title": "Unlocked"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "unlocked"
+        ],
+        "title": "AchievementData"
+      },
+      "AchievementMutation": {
+        "properties": {
+          "mutationId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Mutationid"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "upsert",
+              "delete"
+            ],
+            "title": "Operation"
+          },
+          "baseVersion": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Baseversion"
+          },
+          "clientRevision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Clientrevision"
+          },
+          "entity": {
+            "type": "string",
+            "const": "achievement",
+            "title": "Entity"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AchievementData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "mutationId",
+          "id",
+          "operation",
+          "baseVersion",
+          "clientRevision",
+          "entity"
+        ],
+        "title": "AchievementMutation"
+      },
+      "Applied": {
+        "properties": {
+          "mutationId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Mutationid"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "entity": {
+            "type": "string",
+            "title": "Entity"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "mutationId",
           "id",
           "entity",
           "version"
         ],
-        "title": "AppliedMutation",
-        "type": "object"
+        "title": "Applied"
       },
-      "ChangeRecord": {
-        "additionalProperties": false,
+      "AuthInput": {
         "properties": {
-          "entity": {
-            "enum": [
-              "product",
-              "meal",
-              "entry"
-            ],
-            "title": "Entity",
-            "type": "string"
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
           },
-          "id": {
+          "password": {
+            "type": "string",
+            "format": "password",
+            "title": "Password",
+            "writeOnly": true
+          },
+          "device_id": {
+            "type": "string",
             "format": "uuid",
-            "title": "Id",
-            "type": "string"
+            "title": "Device Id"
           },
-          "version": {
-            "minimum": 1,
-            "title": "Version",
-            "type": "integer"
-          },
-          "updatedAt": {
-            "format": "date-time",
-            "title": "Updatedat",
-            "type": "string"
-          },
-          "deletedAt": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Deletedat"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ProductData"
-              },
-              {
-                "$ref": "#/components/schemas/MealData"
-              },
-              {
-                "$ref": "#/components/schemas/EntryData"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Data"
+          "device_name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Device Name",
+            "default": "Android"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
-          "entity",
-          "id",
-          "version",
-          "updatedAt",
-          "data"
+          "email",
+          "password",
+          "device_id"
         ],
-        "title": "ChangeRecord",
-        "type": "object"
+        "title": "AuthInput"
       },
       "EntryData": {
-        "additionalProperties": false,
         "properties": {
           "mealId": {
+            "type": "string",
             "format": "uuid",
-            "title": "Mealid",
-            "type": "string"
+            "title": "Mealid"
           },
           "productId": {
+            "type": "string",
             "format": "uuid",
-            "title": "Productid",
-            "type": "string"
+            "title": "Productid"
           },
           "grams": {
-            "exclusiveMinimum": 0,
-            "maximum": 10000,
-            "title": "Grams",
-            "type": "number"
+            "type": "number",
+            "maximum": 10000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Grams"
           },
           "snapshot": {
             "$ref": "#/components/schemas/ProductSnapshot"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "mealId",
           "productId",
           "grams",
           "snapshot"
         ],
-        "title": "EntryData",
-        "type": "object"
+        "title": "EntryData"
       },
       "EntryMutation": {
-        "additionalProperties": false,
         "properties": {
           "mutationId": {
+            "type": "string",
             "format": "uuid",
-            "title": "Mutationid",
-            "type": "string"
+            "title": "Mutationid"
           },
           "id": {
+            "type": "string",
             "format": "uuid",
-            "title": "Id",
-            "type": "string"
+            "title": "Id"
           },
           "operation": {
+            "type": "string",
             "enum": [
               "upsert",
               "delete"
             ],
-            "title": "Operation",
-            "type": "string"
+            "title": "Operation"
           },
           "baseVersion": {
-            "minimum": 0,
-            "title": "Baseversion",
-            "type": "integer"
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Baseversion"
           },
           "clientRevision": {
-            "minimum": 1,
-            "title": "Clientrevision",
-            "type": "integer"
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Clientrevision"
           },
           "entity": {
+            "type": "string",
             "const": "entry",
-            "title": "Entity",
-            "type": "string"
+            "title": "Entity"
           },
           "data": {
             "anyOf": [
@@ -345,10 +1215,11 @@
               {
                 "type": "null"
               }
-            ],
-            "default": null
+            ]
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "mutationId",
           "id",
@@ -357,70 +1228,237 @@
           "clientRevision",
           "entity"
         ],
-        "title": "EntryMutation",
-        "type": "object"
+        "title": "EntryMutation"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            ],
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorResponse"
+      },
+      "ExerciseData": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "muscleGroup": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Musclegroup"
+          },
+          "equipment": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Equipment"
+          },
+          "contraindications": {
+            "items": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "type": "array",
+            "maxItems": 30,
+            "title": "Contraindications"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "muscleGroup",
+          "equipment"
+        ],
+        "title": "ExerciseData"
+      },
+      "GoalData": {
+        "properties": {
+          "goal": {
+            "type": "string",
+            "enum": [
+              "weightLoss",
+              "muscleGain",
+              "maintenance",
+              "endurance"
+            ],
+            "title": "Goal"
+          },
+          "targetWeightKg": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 500.0,
+                "minimum": 20.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Targetweightkg"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "goal"
+        ],
+        "title": "GoalData"
+      },
+      "GoalMutation": {
+        "properties": {
+          "mutationId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Mutationid"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "upsert",
+              "delete"
+            ],
+            "title": "Operation"
+          },
+          "baseVersion": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Baseversion"
+          },
+          "clientRevision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Clientrevision"
+          },
+          "entity": {
+            "type": "string",
+            "const": "goal",
+            "title": "Entity"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GoalData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "mutationId",
+          "id",
+          "operation",
+          "baseVersion",
+          "clientRevision",
+          "entity"
+        ],
+        "title": "GoalMutation"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "HealthResponse"
       },
       "MealData": {
-        "additionalProperties": false,
         "properties": {
           "day": {
+            "type": "string",
             "format": "date",
-            "title": "Day",
-            "type": "string"
+            "title": "Day"
           },
           "kind": {
+            "type": "string",
             "enum": [
               "breakfast",
               "lunch",
               "dinner",
               "snack"
             ],
-            "title": "Kind",
-            "type": "string"
+            "title": "Kind"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "day",
           "kind"
         ],
-        "title": "MealData",
-        "type": "object"
+        "title": "MealData"
       },
       "MealMutation": {
-        "additionalProperties": false,
         "properties": {
           "mutationId": {
+            "type": "string",
             "format": "uuid",
-            "title": "Mutationid",
-            "type": "string"
+            "title": "Mutationid"
           },
           "id": {
+            "type": "string",
             "format": "uuid",
-            "title": "Id",
-            "type": "string"
+            "title": "Id"
           },
           "operation": {
+            "type": "string",
             "enum": [
               "upsert",
               "delete"
             ],
-            "title": "Operation",
-            "type": "string"
+            "title": "Operation"
           },
           "baseVersion": {
-            "minimum": 0,
-            "title": "Baseversion",
-            "type": "integer"
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Baseversion"
           },
           "clientRevision": {
-            "minimum": 1,
-            "title": "Clientrevision",
-            "type": "integer"
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Clientrevision"
           },
           "entity": {
+            "type": "string",
             "const": "meal",
-            "title": "Entity",
-            "type": "string"
+            "title": "Entity"
           },
           "data": {
             "anyOf": [
@@ -430,10 +1468,11 @@
               {
                 "type": "null"
               }
-            ],
-            "default": null
+            ]
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "mutationId",
           "id",
@@ -442,43 +1481,43 @@
           "clientRevision",
           "entity"
         ],
-        "title": "MealMutation",
-        "type": "object"
+        "title": "MealMutation"
       },
       "ProductData": {
-        "additionalProperties": false,
         "properties": {
           "name": {
+            "type": "string",
             "maxLength": 120,
             "minLength": 1,
-            "title": "Name",
-            "type": "string"
+            "title": "Name"
           },
           "calories": {
-            "maximum": 900,
-            "minimum": 0,
-            "title": "Calories",
-            "type": "number"
+            "type": "number",
+            "maximum": 900.0,
+            "minimum": 0.0,
+            "title": "Calories"
           },
           "protein": {
+            "type": "number",
             "maximum": 100.1,
-            "minimum": 0,
-            "title": "Protein",
-            "type": "number"
+            "minimum": 0.0,
+            "title": "Protein"
           },
           "fat": {
+            "type": "number",
             "maximum": 100.1,
-            "minimum": 0,
-            "title": "Fat",
-            "type": "number"
+            "minimum": 0.0,
+            "title": "Fat"
           },
           "carbs": {
+            "type": "number",
             "maximum": 100.1,
-            "minimum": 0,
-            "title": "Carbs",
-            "type": "number"
+            "minimum": 0.0,
+            "title": "Carbs"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "name",
           "calories",
@@ -486,44 +1525,42 @@
           "fat",
           "carbs"
         ],
-        "title": "ProductData",
-        "type": "object"
+        "title": "ProductData"
       },
       "ProductMutation": {
-        "additionalProperties": false,
         "properties": {
           "mutationId": {
+            "type": "string",
             "format": "uuid",
-            "title": "Mutationid",
-            "type": "string"
+            "title": "Mutationid"
           },
           "id": {
+            "type": "string",
             "format": "uuid",
-            "title": "Id",
-            "type": "string"
+            "title": "Id"
           },
           "operation": {
+            "type": "string",
             "enum": [
               "upsert",
               "delete"
             ],
-            "title": "Operation",
-            "type": "string"
+            "title": "Operation"
           },
           "baseVersion": {
-            "minimum": 0,
-            "title": "Baseversion",
-            "type": "integer"
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Baseversion"
           },
           "clientRevision": {
-            "minimum": 1,
-            "title": "Clientrevision",
-            "type": "integer"
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Clientrevision"
           },
           "entity": {
+            "type": "string",
             "const": "product",
-            "title": "Entity",
-            "type": "string"
+            "title": "Entity"
           },
           "data": {
             "anyOf": [
@@ -533,10 +1570,11 @@
               {
                 "type": "null"
               }
-            ],
-            "default": null
+            ]
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "mutationId",
           "id",
@@ -545,48 +1583,48 @@
           "clientRevision",
           "entity"
         ],
-        "title": "ProductMutation",
-        "type": "object"
+        "title": "ProductMutation"
       },
       "ProductSnapshot": {
-        "additionalProperties": false,
         "properties": {
           "name": {
+            "type": "string",
             "maxLength": 120,
             "minLength": 1,
-            "title": "Name",
-            "type": "string"
+            "title": "Name"
           },
           "calories": {
-            "maximum": 900,
-            "minimum": 0,
-            "title": "Calories",
-            "type": "number"
+            "type": "number",
+            "maximum": 900.0,
+            "minimum": 0.0,
+            "title": "Calories"
           },
           "protein": {
+            "type": "number",
             "maximum": 100.1,
-            "minimum": 0,
-            "title": "Protein",
-            "type": "number"
+            "minimum": 0.0,
+            "title": "Protein"
           },
           "fat": {
+            "type": "number",
             "maximum": 100.1,
-            "minimum": 0,
-            "title": "Fat",
-            "type": "number"
+            "minimum": 0.0,
+            "title": "Fat"
           },
           "carbs": {
+            "type": "number",
             "maximum": 100.1,
-            "minimum": 0,
-            "title": "Carbs",
-            "type": "number"
+            "minimum": 0.0,
+            "title": "Carbs"
           },
           "id": {
+            "type": "string",
             "format": "uuid",
-            "title": "Id",
-            "type": "string"
+            "title": "Id"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "name",
           "calories",
@@ -595,49 +1633,363 @@
           "carbs",
           "id"
         ],
-        "title": "ProductSnapshot",
-        "type": "object"
+        "title": "ProductSnapshot"
       },
-      "PullResponse": {
+      "ProfileData": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 80,
+            "title": "Name"
+          },
+          "birthDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birthdate"
+          },
+          "sex": {
+            "type": "string",
+            "enum": [
+              "unspecified",
+              "female",
+              "male"
+            ],
+            "title": "Sex"
+          },
+          "heightCm": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 260.0,
+                "minimum": 50.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heightcm"
+          },
+          "weightKg": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 500.0,
+                "minimum": 20.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weightkg"
+          },
+          "targetWeightKg": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 500.0,
+                "minimum": 20.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Targetweightkg"
+          },
+          "activity": {
+            "type": "string",
+            "enum": [
+              "sedentary",
+              "light",
+              "moderate",
+              "active",
+              "veryActive"
+            ],
+            "title": "Activity"
+          },
+          "goal": {
+            "type": "string",
+            "enum": [
+              "weightLoss",
+              "muscleGain",
+              "maintenance",
+              "endurance"
+            ],
+            "title": "Goal"
+          },
+          "programId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Programid"
+          }
+        },
         "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "sex",
+          "activity",
+          "goal"
+        ],
+        "title": "ProfileData"
+      },
+      "ProfileMutation": {
+        "properties": {
+          "mutationId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Mutationid"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "upsert",
+              "delete"
+            ],
+            "title": "Operation"
+          },
+          "baseVersion": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Baseversion"
+          },
+          "clientRevision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Clientrevision"
+          },
+          "entity": {
+            "type": "string",
+            "const": "profile",
+            "title": "Entity"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProfileData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "mutationId",
+          "id",
+          "operation",
+          "baseVersion",
+          "clientRevision",
+          "entity"
+        ],
+        "title": "ProfileMutation"
+      },
+      "ProgressData": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "workoutDone": {
+            "type": "boolean",
+            "title": "Workoutdone"
+          },
+          "caloriesConsumed": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Caloriesconsumed"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "day",
+          "workoutDone"
+        ],
+        "title": "ProgressData"
+      },
+      "ProgressMutation": {
+        "properties": {
+          "mutationId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Mutationid"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "upsert",
+              "delete"
+            ],
+            "title": "Operation"
+          },
+          "baseVersion": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Baseversion"
+          },
+          "clientRevision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Clientrevision"
+          },
+          "entity": {
+            "type": "string",
+            "const": "progress",
+            "title": "Entity"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProgressData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "mutationId",
+          "id",
+          "operation",
+          "baseVersion",
+          "clientRevision",
+          "entity"
+        ],
+        "title": "ProgressMutation"
+      },
+      "RefreshInput": {
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "format": "password",
+            "title": "Refresh Token",
+            "writeOnly": true
+          },
+          "device_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Device Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "refresh_token",
+          "device_id"
+        ],
+        "title": "RefreshInput"
+      },
+      "RegisterInput": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "title": "Password",
+            "writeOnly": true
+          },
+          "device_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Device Id"
+          },
+          "device_name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Device Name",
+            "default": "Android"
+          },
+          "display_name": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Display Name",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "device_id"
+        ],
+        "title": "RegisterInput"
+      },
+      "SyncPullResult": {
         "properties": {
           "changes": {
             "items": {
-              "$ref": "#/components/schemas/ChangeRecord"
+              "additionalProperties": true,
+              "type": "object"
             },
-            "title": "Changes",
-            "type": "array"
+            "type": "array",
+            "title": "Changes"
           },
           "nextCursor": {
-            "title": "Nextcursor",
-            "type": "string"
+            "type": "string",
+            "title": "Nextcursor"
           },
           "hasMore": {
-            "title": "Hasmore",
-            "type": "boolean"
+            "type": "boolean",
+            "title": "Hasmore"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "changes",
           "nextCursor",
           "hasMore"
         ],
-        "title": "PullResponse",
-        "type": "object"
+        "title": "SyncPullResult"
       },
-      "PushRequest": {
-        "additionalProperties": false,
+      "SyncPush": {
         "properties": {
           "changes": {
             "items": {
-              "discriminator": {
-                "mapping": {
-                  "entry": "#/components/schemas/EntryMutation",
-                  "meal": "#/components/schemas/MealMutation",
-                  "product": "#/components/schemas/ProductMutation"
-                },
-                "propertyName": "entity"
-              },
               "oneOf": [
                 {
                   "$ref": "#/components/schemas/ProductMutation"
@@ -647,107 +1999,206 @@
                 },
                 {
                   "$ref": "#/components/schemas/EntryMutation"
+                },
+                {
+                  "$ref": "#/components/schemas/ProfileMutation"
+                },
+                {
+                  "$ref": "#/components/schemas/GoalMutation"
+                },
+                {
+                  "$ref": "#/components/schemas/WorkoutMutation"
+                },
+                {
+                  "$ref": "#/components/schemas/ProgressMutation"
+                },
+                {
+                  "$ref": "#/components/schemas/AchievementMutation"
                 }
-              ]
+              ],
+              "discriminator": {
+                "propertyName": "entity",
+                "mapping": {
+                  "achievement": "#/components/schemas/AchievementMutation",
+                  "entry": "#/components/schemas/EntryMutation",
+                  "goal": "#/components/schemas/GoalMutation",
+                  "meal": "#/components/schemas/MealMutation",
+                  "product": "#/components/schemas/ProductMutation",
+                  "profile": "#/components/schemas/ProfileMutation",
+                  "progress": "#/components/schemas/ProgressMutation",
+                  "workout": "#/components/schemas/WorkoutMutation"
+                }
+              }
             },
+            "type": "array",
             "maxItems": 100,
             "minItems": 1,
-            "title": "Changes",
-            "type": "array"
+            "title": "Changes"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "changes"
         ],
-        "title": "PushRequest",
-        "type": "object"
+        "title": "SyncPush"
       },
-      "PushResponse": {
-        "additionalProperties": false,
+      "SyncPushResult": {
         "properties": {
           "applied": {
             "items": {
-              "$ref": "#/components/schemas/AppliedMutation"
+              "$ref": "#/components/schemas/Applied"
             },
-            "title": "Applied",
-            "type": "array"
+            "type": "array",
+            "title": "Applied"
           },
           "cursor": {
-            "title": "Cursor",
-            "type": "string"
+            "type": "string",
+            "title": "Cursor"
           }
         },
+        "additionalProperties": false,
+        "type": "object",
         "required": [
           "applied",
           "cursor"
         ],
-        "title": "PushResponse",
-        "type": "object"
+        "title": "SyncPushResult"
       },
-      "SyncError": {
-        "additionalProperties": false,
+      "TokenResponse": {
         "properties": {
-          "code": {
-            "enum": [
-              "unauthorized",
-              "version_conflict",
-              "reference_missing",
-              "validation_error",
-              "cursor_expired"
-            ],
-            "title": "Code",
-            "type": "string"
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
           },
-          "detail": {
-            "title": "Detail",
-            "type": "string"
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token"
           },
-          "entityId": {
-            "anyOf": [
-              {
-                "format": "uuid",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Entityid"
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
           },
-          "canonicalId": {
-            "anyOf": [
-              {
-                "format": "uuid",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Canonicalid"
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In"
           },
-          "currentVersion": {
-            "anyOf": [
-              {
-                "minimum": 1,
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Currentversion"
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
           }
         },
+        "type": "object",
         "required": [
-          "code",
-          "detail"
+          "access_token",
+          "refresh_token",
+          "expires_in",
+          "user_id",
+          "display_name"
         ],
-        "title": "SyncError",
-        "type": "object"
+        "title": "TokenResponse"
+      },
+      "WorkoutData": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "targetGoal": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Targetgoal"
+          },
+          "exercises": {
+            "items": {
+              "$ref": "#/components/schemas/ExerciseData"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Exercises"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title",
+          "targetGoal",
+          "exercises"
+        ],
+        "title": "WorkoutData"
+      },
+      "WorkoutMutation": {
+        "properties": {
+          "mutationId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Mutationid"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "upsert",
+              "delete"
+            ],
+            "title": "Operation"
+          },
+          "baseVersion": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Baseversion"
+          },
+          "clientRevision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Clientrevision"
+          },
+          "entity": {
+            "type": "string",
+            "const": "workout",
+            "title": "Entity"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkoutData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "mutationId",
+          "id",
+          "operation",
+          "baseVersion",
+          "clientRevision",
+          "entity"
+        ],
+        "title": "WorkoutMutation"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }

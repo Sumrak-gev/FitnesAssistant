@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../data/workout_repository.dart';
+import '../../core/db/app_database.dart';
 import '../../models/goal.dart';
 import '../../models/program.dart';
 import '../../models/user_profile.dart';
@@ -27,8 +28,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   late ActivityLevel _activity;
   late GoalType _goal;
   late String? _programId;
-  late final Future<List<Program>> _programs = WorkoutRepository()
-      .getPrograms();
+  late final Future<List<Program>> _programs = WorkoutRepository(
+    context.read<AppDatabase>(),
+  ).getPrograms();
   bool _saving = false;
 
   @override

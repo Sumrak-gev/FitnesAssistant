@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" \
+  --set=owner_password="$FITNESS_OWNER_PASSWORD" --set=app_password="$FITNESS_APP_PASSWORD" <<'SQL'
+SELECT format('CREATE ROLE fitness_owner LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION PASSWORD %L', :'owner_password') \gexec
+SELECT format('CREATE ROLE fitness_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION PASSWORD %L', :'app_password') \gexec
+ALTER DATABASE fitness_dev OWNER TO fitness_owner;
+REVOKE ALL ON DATABASE fitness_dev FROM PUBLIC;
+GRANT CONNECT ON DATABASE fitness_dev TO fitness_app;
+ALTER SCHEMA public OWNER TO fitness_owner;
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+GRANT USAGE ON SCHEMA public TO fitness_app;
+ALTER DEFAULT PRIVILEGES FOR ROLE fitness_owner IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO fitness_app;
+ALTER DEFAULT PRIVILEGES FOR ROLE fitness_owner IN SCHEMA public
+  GRANT USAGE, SELECT ON SEQUENCES TO fitness_app;
+SQL

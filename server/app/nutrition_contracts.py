@@ -1,4 +1,4 @@
-"""Versioned nutrition DTOs; HTTP sync handlers are implemented after authentication."""
+"""Versioned nutrition DTOs used by the authenticated sync handlers."""
 from datetime import date, datetime
 from typing import Annotated, Literal
 from uuid import UUID
@@ -11,10 +11,10 @@ class Contract(BaseModel):
 
 class ProductData(Contract):
     name: str = Field(min_length=1, max_length=120)
-    calories: float = Field(ge=0, le=900)
-    protein: float = Field(ge=0, le=100.1)
-    fat: float = Field(ge=0, le=100.1)
-    carbs: float = Field(ge=0, le=100.1)
+    calories: float = Field(strict=True, ge=0, le=900)
+    protein: float = Field(strict=True, ge=0, le=100.1)
+    fat: float = Field(strict=True, ge=0, le=100.1)
+    carbs: float = Field(strict=True, ge=0, le=100.1)
 
     @model_validator(mode="after")
     def macro_mass(self):
@@ -32,7 +32,7 @@ class MealData(Contract):
 class EntryData(Contract):
     meal_id: UUID
     product_id: UUID
-    grams: float = Field(gt=0, le=10000)
+    grams: float = Field(strict=True, gt=0, le=10000)
     snapshot: ProductSnapshot
 
     @model_validator(mode="after")
@@ -45,8 +45,8 @@ class Mutation(Contract):
     mutation_id: UUID
     id: UUID
     operation: Literal["upsert", "delete"]
-    base_version: int = Field(ge=0)
-    client_revision: int = Field(ge=1)
+    base_version: int = Field(strict=True, ge=0)
+    client_revision: int = Field(strict=True, ge=1)
 
     @model_validator(mode="after")
     def payload_matches_operation(self):

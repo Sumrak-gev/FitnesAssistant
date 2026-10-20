@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../data/workout_repository.dart';
+import '../../core/db/app_database.dart';
 import '../../models/goal.dart';
 import '../../models/program.dart';
 import '../../services/profile_controller.dart';
@@ -15,8 +16,9 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  late final Future<List<Program>> _programs = WorkoutRepository()
-      .getPrograms();
+  late final Future<List<Program>> _programs = WorkoutRepository(
+    context.read<AppDatabase>(),
+  ).getPrograms();
 
   @override
   Widget build(BuildContext context) {
