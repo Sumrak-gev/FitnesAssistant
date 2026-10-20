@@ -20,7 +20,10 @@ def test_wrong_database_driver_is_rejected(url):
 
 
 def test_models_compile_for_postgresql():
-    assert set(Base.metadata.tables) == {"users", "devices", "refresh_tokens"}
+    assert set(Base.metadata.tables) == {
+        "users", "devices", "refresh_tokens",
+        "nutrition_products", "nutrition_meals", "nutrition_entries",
+    }
     for table in Base.metadata.sorted_tables:
         sql = str(CreateTable(table).compile(dialect=postgresql.dialect()))
         assert "CREATE TABLE" in sql

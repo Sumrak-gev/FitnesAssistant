@@ -1,7 +1,7 @@
 import '../models/day_log.dart';
 import '../utils/date_helpers.dart';
 
-/// TODO: заменить in-memory реализацию на SQLite (sqflite).
+/// TODO: заменить in-memory реализацию на Drift (по образцу NutritionRepository).
 class ProgressRepository {
   ProgressRepository._(this._logs);
 
