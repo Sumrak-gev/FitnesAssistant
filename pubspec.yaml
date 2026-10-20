@@ -1,7 +1,7 @@
 name: fitness_assistant
 description: Мобильное приложение — расчёт КБЖУ и тренировочные программы.
 publish_to: 'none'
-version: 0.1.0
+version: 0.1.0-pre.1+1
 
 environment:
   sdk: '>=3.12.0 <4.0.0'
@@ -17,6 +17,7 @@ dependencies:
   flutter_local_notifications: ^22.0.0
   flutter_timezone: ^5.0.0
   timezone: ^0.11.0
+  uuid: ^4.5.1
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
@@ -25,6 +26,7 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   drift_dev: ^2.32.0
   build_runner: ^2.10.0
+  sqlite3: ^3.5.2
 
 flutter:
   uses-material-design: true

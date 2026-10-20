@@ -24,7 +24,9 @@ class ProfileRepository {
     );
   }
 
-  Future<void> saveProfile(UserProfile profile) async {
+  Future<void> saveProfile(
+    UserProfile profile,
+  ) => database.transaction(() async {
     profile.validate();
     await database
         .into(database.localProfiles)
@@ -43,7 +45,11 @@ class ProfileRepository {
             updatedAt: DateTime.now().toUtc(),
           ),
         );
-  }
+    // Привязываем локального владельца данных к профилю, если он был создан раньше профиля.
+    await (database.update(database.syncUsers)
+          ..where((u) => u.localSlot.equals(1) & u.profileId.isNull()))
+        .write(const SyncUsersCompanion(profileId: Value(1)));
+  });
 
   Future<ReminderSettings> loadReminders() async {
     final row = await database

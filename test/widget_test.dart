@@ -43,7 +43,7 @@ void main() {
     );
     await tester.pumpWidget(FitnessAssistantApp(profileController: controller));
     await tester.pumpAndSettle();
-    expect(find.byType(NavigationDestination), findsNWidgets(5));
+    expect(find.byType(NavigationDestination), findsNWidgets(6));
     await tester.tap(find.text('Профиль').last);
     await tester.pumpAndSettle();
     expect(find.text('Денис'), findsOneWidget);

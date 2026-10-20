@@ -9,6 +9,7 @@ import 'screens/profile/profile_screen.dart';
 import 'screens/nutrition/nutrition_screen.dart';
 import 'screens/workouts/workouts_screen.dart';
 import 'screens/goals/goals_screen.dart';
+import 'screens/progress/progress_screen.dart';
 import 'screens/achievements/achievements_screen.dart';
 
 void main() {
@@ -56,8 +57,11 @@ class _FitnessAssistantAppState extends State<FitnessAssistantApp>
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: _profile,
+    return MultiProvider(
+      providers: [
+        Provider<AppDatabase>.value(value: _profile.repository.database),
+        ChangeNotifierProvider<ProfileController>.value(value: _profile),
+      ],
       child: MaterialApp(
         title: 'Фитнес-помощник',
         debugShowCheckedModeBanner: false,
@@ -86,6 +90,7 @@ class _RootScreenState extends State<RootScreen> {
     NutritionScreen(),
     WorkoutsScreen(),
     GoalsScreen(),
+    ProgressScreen(),
     AchievementsScreen(),
     ProfileScreen(),
   ];
@@ -104,6 +109,10 @@ class _RootScreenState extends State<RootScreen> {
             label: 'Тренировки',
           ),
           NavigationDestination(icon: Icon(Icons.flag), label: 'Цели'),
+          NavigationDestination(
+            icon: Icon(Icons.trending_up),
+            label: 'Прогресс',
+          ),
           NavigationDestination(
             icon: Icon(Icons.emoji_events),
             label: 'Достижения',

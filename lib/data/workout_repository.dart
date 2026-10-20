@@ -1,7 +1,7 @@
 import '../models/exercise.dart';
 import '../models/program.dart';
 
-/// TODO: заменить in-memory реализацию на SQLite (sqflite).
+/// TODO: заменить in-memory реализацию на Drift (по образцу NutritionRepository).
 class WorkoutRepository {
   final List<Exercise> _exercises = const [
     Exercise(id: 'e1', name: 'Приседания со штангой', muscleGroup: 'ноги', equipment: 'штанга', contraindications: ['травма колена']),
