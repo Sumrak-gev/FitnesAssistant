@@ -1,6 +1,6 @@
 import '../models/product.dart';
 
-/// TODO: заменить in-memory реализацию на SQLite (sqflite).
+/// TODO: заменить in-memory реализацию на Drift (по образцу NutritionRepository).
 class ProductRepository {
   final List<Product> _products = const [
     Product(id: '1', name: 'Куриная грудка', calories: 165, protein: 31, fat: 3.6, carbs: 0),
