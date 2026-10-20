@@ -1050,12 +1050,12 @@ class LocalRemindersCompanion extends UpdateCompanion<LocalReminder> {
   }
 }
 
-class $NutritionUsersTable extends NutritionUsers
-    with TableInfo<$NutritionUsersTable, NutritionUser> {
+class $SyncUsersTable extends SyncUsers
+    with TableInfo<$SyncUsersTable, SyncUser> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $NutritionUsersTable(this.attachedDatabase, [this._alias]);
+  $SyncUsersTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
@@ -1100,7 +1100,7 @@ class $NutritionUsersTable extends NutritionUsers
   static const String $name = 'nutrition_users';
   @override
   VerificationContext validateIntegrity(
-    Insertable<NutritionUser> instance, {
+    Insertable<SyncUser> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -1128,9 +1128,9 @@ class $NutritionUsersTable extends NutritionUsers
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  NutritionUser map(Map<String, dynamic> data, {String? tablePrefix}) {
+  SyncUser map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return NutritionUser(
+    return SyncUser(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -1147,16 +1147,16 @@ class $NutritionUsersTable extends NutritionUsers
   }
 
   @override
-  $NutritionUsersTable createAlias(String alias) {
-    return $NutritionUsersTable(attachedDatabase, alias);
+  $SyncUsersTable createAlias(String alias) {
+    return $SyncUsersTable(attachedDatabase, alias);
   }
 }
 
-class NutritionUser extends DataClass implements Insertable<NutritionUser> {
+class SyncUser extends DataClass implements Insertable<SyncUser> {
   final String id;
   final int? localSlot;
   final int? profileId;
-  const NutritionUser({required this.id, this.localSlot, this.profileId});
+  const SyncUser({required this.id, this.localSlot, this.profileId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1170,8 +1170,8 @@ class NutritionUser extends DataClass implements Insertable<NutritionUser> {
     return map;
   }
 
-  NutritionUsersCompanion toCompanion(bool nullToAbsent) {
-    return NutritionUsersCompanion(
+  SyncUsersCompanion toCompanion(bool nullToAbsent) {
+    return SyncUsersCompanion(
       id: Value(id),
       localSlot: localSlot == null && nullToAbsent
           ? const Value.absent()
@@ -1182,12 +1182,12 @@ class NutritionUser extends DataClass implements Insertable<NutritionUser> {
     );
   }
 
-  factory NutritionUser.fromJson(
+  factory SyncUser.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return NutritionUser(
+    return SyncUser(
       id: serializer.fromJson<String>(json['id']),
       localSlot: serializer.fromJson<int?>(json['localSlot']),
       profileId: serializer.fromJson<int?>(json['profileId']),
@@ -1203,17 +1203,17 @@ class NutritionUser extends DataClass implements Insertable<NutritionUser> {
     };
   }
 
-  NutritionUser copyWith({
+  SyncUser copyWith({
     String? id,
     Value<int?> localSlot = const Value.absent(),
     Value<int?> profileId = const Value.absent(),
-  }) => NutritionUser(
+  }) => SyncUser(
     id: id ?? this.id,
     localSlot: localSlot.present ? localSlot.value : this.localSlot,
     profileId: profileId.present ? profileId.value : this.profileId,
   );
-  NutritionUser copyWithCompanion(NutritionUsersCompanion data) {
-    return NutritionUser(
+  SyncUser copyWithCompanion(SyncUsersCompanion data) {
+    return SyncUser(
       id: data.id.present ? data.id.value : this.id,
       localSlot: data.localSlot.present ? data.localSlot.value : this.localSlot,
       profileId: data.profileId.present ? data.profileId.value : this.profileId,
@@ -1222,7 +1222,7 @@ class NutritionUser extends DataClass implements Insertable<NutritionUser> {
 
   @override
   String toString() {
-    return (StringBuffer('NutritionUser(')
+    return (StringBuffer('SyncUser(')
           ..write('id: $id, ')
           ..write('localSlot: $localSlot, ')
           ..write('profileId: $profileId')
@@ -1235,30 +1235,30 @@ class NutritionUser extends DataClass implements Insertable<NutritionUser> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is NutritionUser &&
+      (other is SyncUser &&
           other.id == this.id &&
           other.localSlot == this.localSlot &&
           other.profileId == this.profileId);
 }
 
-class NutritionUsersCompanion extends UpdateCompanion<NutritionUser> {
+class SyncUsersCompanion extends UpdateCompanion<SyncUser> {
   final Value<String> id;
   final Value<int?> localSlot;
   final Value<int?> profileId;
   final Value<int> rowid;
-  const NutritionUsersCompanion({
+  const SyncUsersCompanion({
     this.id = const Value.absent(),
     this.localSlot = const Value.absent(),
     this.profileId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  NutritionUsersCompanion.insert({
+  SyncUsersCompanion.insert({
     required String id,
     this.localSlot = const Value.absent(),
     this.profileId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id);
-  static Insertable<NutritionUser> custom({
+  static Insertable<SyncUser> custom({
     Expression<String>? id,
     Expression<int>? localSlot,
     Expression<int>? profileId,
@@ -1272,13 +1272,13 @@ class NutritionUsersCompanion extends UpdateCompanion<NutritionUser> {
     });
   }
 
-  NutritionUsersCompanion copyWith({
+  SyncUsersCompanion copyWith({
     Value<String>? id,
     Value<int?>? localSlot,
     Value<int?>? profileId,
     Value<int>? rowid,
   }) {
-    return NutritionUsersCompanion(
+    return SyncUsersCompanion(
       id: id ?? this.id,
       localSlot: localSlot ?? this.localSlot,
       profileId: profileId ?? this.profileId,
@@ -1306,7 +1306,7 @@ class NutritionUsersCompanion extends UpdateCompanion<NutritionUser> {
 
   @override
   String toString() {
-    return (StringBuffer('NutritionUsersCompanion(')
+    return (StringBuffer('SyncUsersCompanion(')
           ..write('id: $id, ')
           ..write('localSlot: $localSlot, ')
           ..write('profileId: $profileId, ')
@@ -3335,12 +3335,12 @@ class NutritionEntriesCompanion extends UpdateCompanion<NutritionEntry> {
   }
 }
 
-class $NutritionOutboxTable extends NutritionOutbox
-    with TableInfo<$NutritionOutboxTable, NutritionOutboxData> {
+class $SyncOutboxTable extends SyncOutbox
+    with TableInfo<$SyncOutboxTable, SyncOutboxData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $NutritionOutboxTable(this.attachedDatabase, [this._alias]);
+  $SyncOutboxTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _sequenceMeta = const VerificationMeta(
     'sequence',
   );
@@ -3386,7 +3386,10 @@ class $NutritionOutboxTable extends NutritionOutbox
     'entity',
     aliasedName,
     false,
-    check: () => entity.isIn(['product', 'meal', 'entry']),
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 64,
+    ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
@@ -3453,7 +3456,7 @@ class $NutritionOutboxTable extends NutritionOutbox
   static const String $name = 'nutrition_outbox';
   @override
   VerificationContext validateIntegrity(
-    Insertable<NutritionOutboxData> instance, {
+    Insertable<SyncOutboxData> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -3526,9 +3529,9 @@ class $NutritionOutboxTable extends NutritionOutbox
   @override
   Set<GeneratedColumn> get $primaryKey => {sequence};
   @override
-  NutritionOutboxData map(Map<String, dynamic> data, {String? tablePrefix}) {
+  SyncOutboxData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return NutritionOutboxData(
+    return SyncOutboxData(
       sequence: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}sequence'],
@@ -3565,22 +3568,23 @@ class $NutritionOutboxTable extends NutritionOutbox
   }
 
   @override
-  $NutritionOutboxTable createAlias(String alias) {
-    return $NutritionOutboxTable(attachedDatabase, alias);
+  $SyncOutboxTable createAlias(String alias) {
+    return $SyncOutboxTable(attachedDatabase, alias);
   }
 }
 
-class NutritionOutboxData extends DataClass
-    implements Insertable<NutritionOutboxData> {
+class SyncOutboxData extends DataClass implements Insertable<SyncOutboxData> {
   final int sequence;
   final String mutationId;
   final String userId;
+
+  /// Имя сущности модуля, например product; допустимые значения задаёт модуль.
   final String entity;
   final String entityId;
   final String operation;
   final String payload;
   final DateTime createdAt;
-  const NutritionOutboxData({
+  const SyncOutboxData({
     required this.sequence,
     required this.mutationId,
     required this.userId,
@@ -3604,8 +3608,8 @@ class NutritionOutboxData extends DataClass
     return map;
   }
 
-  NutritionOutboxCompanion toCompanion(bool nullToAbsent) {
-    return NutritionOutboxCompanion(
+  SyncOutboxCompanion toCompanion(bool nullToAbsent) {
+    return SyncOutboxCompanion(
       sequence: Value(sequence),
       mutationId: Value(mutationId),
       userId: Value(userId),
@@ -3617,12 +3621,12 @@ class NutritionOutboxData extends DataClass
     );
   }
 
-  factory NutritionOutboxData.fromJson(
+  factory SyncOutboxData.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return NutritionOutboxData(
+    return SyncOutboxData(
       sequence: serializer.fromJson<int>(json['sequence']),
       mutationId: serializer.fromJson<String>(json['mutationId']),
       userId: serializer.fromJson<String>(json['userId']),
@@ -3648,7 +3652,7 @@ class NutritionOutboxData extends DataClass
     };
   }
 
-  NutritionOutboxData copyWith({
+  SyncOutboxData copyWith({
     int? sequence,
     String? mutationId,
     String? userId,
@@ -3657,7 +3661,7 @@ class NutritionOutboxData extends DataClass
     String? operation,
     String? payload,
     DateTime? createdAt,
-  }) => NutritionOutboxData(
+  }) => SyncOutboxData(
     sequence: sequence ?? this.sequence,
     mutationId: mutationId ?? this.mutationId,
     userId: userId ?? this.userId,
@@ -3667,8 +3671,8 @@ class NutritionOutboxData extends DataClass
     payload: payload ?? this.payload,
     createdAt: createdAt ?? this.createdAt,
   );
-  NutritionOutboxData copyWithCompanion(NutritionOutboxCompanion data) {
-    return NutritionOutboxData(
+  SyncOutboxData copyWithCompanion(SyncOutboxCompanion data) {
+    return SyncOutboxData(
       sequence: data.sequence.present ? data.sequence.value : this.sequence,
       mutationId: data.mutationId.present
           ? data.mutationId.value
@@ -3684,7 +3688,7 @@ class NutritionOutboxData extends DataClass
 
   @override
   String toString() {
-    return (StringBuffer('NutritionOutboxData(')
+    return (StringBuffer('SyncOutboxData(')
           ..write('sequence: $sequence, ')
           ..write('mutationId: $mutationId, ')
           ..write('userId: $userId, ')
@@ -3711,7 +3715,7 @@ class NutritionOutboxData extends DataClass
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is NutritionOutboxData &&
+      (other is SyncOutboxData &&
           other.sequence == this.sequence &&
           other.mutationId == this.mutationId &&
           other.userId == this.userId &&
@@ -3722,7 +3726,7 @@ class NutritionOutboxData extends DataClass
           other.createdAt == this.createdAt);
 }
 
-class NutritionOutboxCompanion extends UpdateCompanion<NutritionOutboxData> {
+class SyncOutboxCompanion extends UpdateCompanion<SyncOutboxData> {
   final Value<int> sequence;
   final Value<String> mutationId;
   final Value<String> userId;
@@ -3731,7 +3735,7 @@ class NutritionOutboxCompanion extends UpdateCompanion<NutritionOutboxData> {
   final Value<String> operation;
   final Value<String> payload;
   final Value<DateTime> createdAt;
-  const NutritionOutboxCompanion({
+  const SyncOutboxCompanion({
     this.sequence = const Value.absent(),
     this.mutationId = const Value.absent(),
     this.userId = const Value.absent(),
@@ -3741,7 +3745,7 @@ class NutritionOutboxCompanion extends UpdateCompanion<NutritionOutboxData> {
     this.payload = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
-  NutritionOutboxCompanion.insert({
+  SyncOutboxCompanion.insert({
     this.sequence = const Value.absent(),
     required String mutationId,
     required String userId,
@@ -3757,7 +3761,7 @@ class NutritionOutboxCompanion extends UpdateCompanion<NutritionOutboxData> {
        operation = Value(operation),
        payload = Value(payload),
        createdAt = Value(createdAt);
-  static Insertable<NutritionOutboxData> custom({
+  static Insertable<SyncOutboxData> custom({
     Expression<int>? sequence,
     Expression<String>? mutationId,
     Expression<String>? userId,
@@ -3779,7 +3783,7 @@ class NutritionOutboxCompanion extends UpdateCompanion<NutritionOutboxData> {
     });
   }
 
-  NutritionOutboxCompanion copyWith({
+  SyncOutboxCompanion copyWith({
     Value<int>? sequence,
     Value<String>? mutationId,
     Value<String>? userId,
@@ -3789,7 +3793,7 @@ class NutritionOutboxCompanion extends UpdateCompanion<NutritionOutboxData> {
     Value<String>? payload,
     Value<DateTime>? createdAt,
   }) {
-    return NutritionOutboxCompanion(
+    return SyncOutboxCompanion(
       sequence: sequence ?? this.sequence,
       mutationId: mutationId ?? this.mutationId,
       userId: userId ?? this.userId,
@@ -3833,7 +3837,7 @@ class NutritionOutboxCompanion extends UpdateCompanion<NutritionOutboxData> {
 
   @override
   String toString() {
-    return (StringBuffer('NutritionOutboxCompanion(')
+    return (StringBuffer('SyncOutboxCompanion(')
           ..write('sequence: $sequence, ')
           ..write('mutationId: $mutationId, ')
           ..write('userId: $userId, ')
@@ -3852,16 +3856,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $LocalProfilesTable localProfiles = $LocalProfilesTable(this);
   late final $LocalRemindersTable localReminders = $LocalRemindersTable(this);
-  late final $NutritionUsersTable nutritionUsers = $NutritionUsersTable(this);
+  late final $SyncUsersTable syncUsers = $SyncUsersTable(this);
   late final $NutritionProductsTable nutritionProducts =
       $NutritionProductsTable(this);
   late final $NutritionMealsTable nutritionMeals = $NutritionMealsTable(this);
   late final $NutritionEntriesTable nutritionEntries = $NutritionEntriesTable(
     this,
   );
-  late final $NutritionOutboxTable nutritionOutbox = $NutritionOutboxTable(
-    this,
-  );
+  late final $SyncOutboxTable syncOutbox = $SyncOutboxTable(this);
   late final Index nutritionLocalUser = Index(
     'nutrition_local_user',
     'CREATE UNIQUE INDEX nutrition_local_user ON nutrition_users (local_slot) WHERE local_slot IS NOT NULL',
@@ -3893,11 +3895,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     localProfiles,
     localReminders,
-    nutritionUsers,
+    syncUsers,
     nutritionProducts,
     nutritionMeals,
     nutritionEntries,
-    nutritionOutbox,
+    syncOutbox,
     nutritionLocalUser,
     nutritionProductsOwnerName,
     nutritionMealsOwnerDay,
@@ -3954,19 +3956,19 @@ final class $$LocalProfilesTableReferences
     super.$_typedResult,
   );
 
-  static MultiTypedResultKey<$NutritionUsersTable, List<NutritionUser>>
-  _nutritionUsersRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.nutritionUsers,
+  static MultiTypedResultKey<$SyncUsersTable, List<SyncUser>>
+  _syncUsersRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.syncUsers,
     aliasName: 'local_profiles__id__nutrition_users__profile_id',
   );
 
-  $$NutritionUsersTableProcessedTableManager get nutritionUsersRefs {
-    final manager = $$NutritionUsersTableTableManager(
+  $$SyncUsersTableProcessedTableManager get syncUsersRefs {
+    final manager = $$SyncUsersTableTableManager(
       $_db,
-      $_db.nutritionUsers,
+      $_db.syncUsers,
     ).filter((f) => f.profileId.id.sqlEquals($_itemColumn<int>('id')!));
 
-    final cache = $_typedResult.readTableOrNull(_nutritionUsersRefsTable($_db));
+    final cache = $_typedResult.readTableOrNull(_syncUsersRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -4037,22 +4039,22 @@ class $$LocalProfilesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  Expression<bool> nutritionUsersRefs(
-    Expression<bool> Function($$NutritionUsersTableFilterComposer f) f,
+  Expression<bool> syncUsersRefs(
+    Expression<bool> Function($$SyncUsersTableFilterComposer f) f,
   ) {
-    final $$NutritionUsersTableFilterComposer composer = $composerBuilder(
+    final $$SyncUsersTableFilterComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.id,
-      referencedTable: $db.nutritionUsers,
+      referencedTable: $db.syncUsers,
       getReferencedColumn: (t) => t.profileId,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$NutritionUsersTableFilterComposer(
+          }) => $$SyncUsersTableFilterComposer(
             $db: $db,
-            $table: $db.nutritionUsers,
+            $table: $db.syncUsers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -4172,22 +4174,22 @@ class $$LocalProfilesTableAnnotationComposer
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
-  Expression<T> nutritionUsersRefs<T extends Object>(
-    Expression<T> Function($$NutritionUsersTableAnnotationComposer a) f,
+  Expression<T> syncUsersRefs<T extends Object>(
+    Expression<T> Function($$SyncUsersTableAnnotationComposer a) f,
   ) {
-    final $$NutritionUsersTableAnnotationComposer composer = $composerBuilder(
+    final $$SyncUsersTableAnnotationComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.id,
-      referencedTable: $db.nutritionUsers,
+      referencedTable: $db.syncUsers,
       getReferencedColumn: (t) => t.profileId,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$NutritionUsersTableAnnotationComposer(
+          }) => $$SyncUsersTableAnnotationComposer(
             $db: $db,
-            $table: $db.nutritionUsers,
+            $table: $db.syncUsers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -4211,7 +4213,7 @@ class $$LocalProfilesTableTableManager
           $$LocalProfilesTableUpdateCompanionBuilder,
           (LocalProfile, $$LocalProfilesTableReferences),
           LocalProfile,
-          PrefetchHooks Function({bool nutritionUsersRefs})
+          PrefetchHooks Function({bool syncUsersRefs})
         > {
   $$LocalProfilesTableTableManager(_$AppDatabase db, $LocalProfilesTable table)
     : super(
@@ -4284,30 +4286,28 @@ class $$LocalProfilesTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({nutritionUsersRefs = false}) {
+          prefetchHooksCallback: ({syncUsersRefs = false}) {
             return PrefetchHooks(
               db: db,
-              explicitlyWatchedTables: [
-                if (nutritionUsersRefs) db.nutritionUsers,
-              ],
+              explicitlyWatchedTables: [if (syncUsersRefs) db.syncUsers],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
                 return [
-                  if (nutritionUsersRefs)
+                  if (syncUsersRefs)
                     await $_getPrefetchedData<
                       LocalProfile,
                       $LocalProfilesTable,
-                      NutritionUser
+                      SyncUser
                     >(
                       currentTable: table,
                       referencedTable: $$LocalProfilesTableReferences
-                          ._nutritionUsersRefsTable(db),
+                          ._syncUsersRefsTable(db),
                       managerFromTypedResult: (p0) =>
                           $$LocalProfilesTableReferences(
                             db,
                             table,
                             p0,
-                          ).nutritionUsersRefs,
+                          ).syncUsersRefs,
                       referencedItemsForCurrentItem: (item, referencedItems) =>
                           referencedItems.where((e) => e.profileId == item.id),
                       typedResults: items,
@@ -4332,7 +4332,7 @@ typedef $$LocalProfilesTableProcessedTableManager =
       $$LocalProfilesTableUpdateCompanionBuilder,
       (LocalProfile, $$LocalProfilesTableReferences),
       LocalProfile,
-      PrefetchHooks Function({bool nutritionUsersRefs})
+      PrefetchHooks Function({bool syncUsersRefs})
     >;
 typedef $$LocalRemindersTableCreateCompanionBuilder =
     LocalRemindersCompanion Function({
@@ -4558,28 +4558,24 @@ typedef $$LocalRemindersTableProcessedTableManager =
       LocalReminder,
       PrefetchHooks Function()
     >;
-typedef $$NutritionUsersTableCreateCompanionBuilder =
-    NutritionUsersCompanion Function({
+typedef $$SyncUsersTableCreateCompanionBuilder =
+    SyncUsersCompanion Function({
       required String id,
       Value<int?> localSlot,
       Value<int?> profileId,
       Value<int> rowid,
     });
-typedef $$NutritionUsersTableUpdateCompanionBuilder =
-    NutritionUsersCompanion Function({
+typedef $$SyncUsersTableUpdateCompanionBuilder =
+    SyncUsersCompanion Function({
       Value<String> id,
       Value<int?> localSlot,
       Value<int?> profileId,
       Value<int> rowid,
     });
 
-final class $$NutritionUsersTableReferences
-    extends BaseReferences<_$AppDatabase, $NutritionUsersTable, NutritionUser> {
-  $$NutritionUsersTableReferences(
-    super.$_db,
-    super.$_table,
-    super.$_typedResult,
-  );
+final class $$SyncUsersTableReferences
+    extends BaseReferences<_$AppDatabase, $SyncUsersTable, SyncUser> {
+  $$SyncUsersTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static $LocalProfilesTable _profileIdTable(_$AppDatabase db) => db
       .localProfiles
@@ -4658,30 +4654,28 @@ final class $$NutritionUsersTableReferences
     );
   }
 
-  static MultiTypedResultKey<$NutritionOutboxTable, List<NutritionOutboxData>>
-  _nutritionOutboxRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.nutritionOutbox,
+  static MultiTypedResultKey<$SyncOutboxTable, List<SyncOutboxData>>
+  _syncOutboxRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.syncOutbox,
     aliasName: 'nutrition_users__id__nutrition_outbox__user_id',
   );
 
-  $$NutritionOutboxTableProcessedTableManager get nutritionOutboxRefs {
-    final manager = $$NutritionOutboxTableTableManager(
+  $$SyncOutboxTableProcessedTableManager get syncOutboxRefs {
+    final manager = $$SyncOutboxTableTableManager(
       $_db,
-      $_db.nutritionOutbox,
+      $_db.syncOutbox,
     ).filter((f) => f.userId.id.sqlEquals($_itemColumn<String>('id')!));
 
-    final cache = $_typedResult.readTableOrNull(
-      _nutritionOutboxRefsTable($_db),
-    );
+    final cache = $_typedResult.readTableOrNull(_syncOutboxRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
 }
 
-class $$NutritionUsersTableFilterComposer
-    extends Composer<_$AppDatabase, $NutritionUsersTable> {
-  $$NutritionUsersTableFilterComposer({
+class $$SyncUsersTableFilterComposer
+    extends Composer<_$AppDatabase, $SyncUsersTable> {
+  $$SyncUsersTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -4796,22 +4790,22 @@ class $$NutritionUsersTableFilterComposer
     return f(composer);
   }
 
-  Expression<bool> nutritionOutboxRefs(
-    Expression<bool> Function($$NutritionOutboxTableFilterComposer f) f,
+  Expression<bool> syncOutboxRefs(
+    Expression<bool> Function($$SyncOutboxTableFilterComposer f) f,
   ) {
-    final $$NutritionOutboxTableFilterComposer composer = $composerBuilder(
+    final $$SyncOutboxTableFilterComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.id,
-      referencedTable: $db.nutritionOutbox,
+      referencedTable: $db.syncOutbox,
       getReferencedColumn: (t) => t.userId,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$NutritionOutboxTableFilterComposer(
+          }) => $$SyncOutboxTableFilterComposer(
             $db: $db,
-            $table: $db.nutritionOutbox,
+            $table: $db.syncOutbox,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -4822,9 +4816,9 @@ class $$NutritionUsersTableFilterComposer
   }
 }
 
-class $$NutritionUsersTableOrderingComposer
-    extends Composer<_$AppDatabase, $NutritionUsersTable> {
-  $$NutritionUsersTableOrderingComposer({
+class $$SyncUsersTableOrderingComposer
+    extends Composer<_$AppDatabase, $SyncUsersTable> {
+  $$SyncUsersTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -4865,9 +4859,9 @@ class $$NutritionUsersTableOrderingComposer
   }
 }
 
-class $$NutritionUsersTableAnnotationComposer
-    extends Composer<_$AppDatabase, $NutritionUsersTable> {
-  $$NutritionUsersTableAnnotationComposer({
+class $$SyncUsersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SyncUsersTable> {
+  $$SyncUsersTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -4979,22 +4973,22 @@ class $$NutritionUsersTableAnnotationComposer
     return f(composer);
   }
 
-  Expression<T> nutritionOutboxRefs<T extends Object>(
-    Expression<T> Function($$NutritionOutboxTableAnnotationComposer a) f,
+  Expression<T> syncOutboxRefs<T extends Object>(
+    Expression<T> Function($$SyncOutboxTableAnnotationComposer a) f,
   ) {
-    final $$NutritionOutboxTableAnnotationComposer composer = $composerBuilder(
+    final $$SyncOutboxTableAnnotationComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.id,
-      referencedTable: $db.nutritionOutbox,
+      referencedTable: $db.syncOutbox,
       getReferencedColumn: (t) => t.userId,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$NutritionOutboxTableAnnotationComposer(
+          }) => $$SyncOutboxTableAnnotationComposer(
             $db: $db,
-            $table: $db.nutritionOutbox,
+            $table: $db.syncOutbox,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -5005,47 +4999,45 @@ class $$NutritionUsersTableAnnotationComposer
   }
 }
 
-class $$NutritionUsersTableTableManager
+class $$SyncUsersTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $NutritionUsersTable,
-          NutritionUser,
-          $$NutritionUsersTableFilterComposer,
-          $$NutritionUsersTableOrderingComposer,
-          $$NutritionUsersTableAnnotationComposer,
-          $$NutritionUsersTableCreateCompanionBuilder,
-          $$NutritionUsersTableUpdateCompanionBuilder,
-          (NutritionUser, $$NutritionUsersTableReferences),
-          NutritionUser,
+          $SyncUsersTable,
+          SyncUser,
+          $$SyncUsersTableFilterComposer,
+          $$SyncUsersTableOrderingComposer,
+          $$SyncUsersTableAnnotationComposer,
+          $$SyncUsersTableCreateCompanionBuilder,
+          $$SyncUsersTableUpdateCompanionBuilder,
+          (SyncUser, $$SyncUsersTableReferences),
+          SyncUser,
           PrefetchHooks Function({
             bool profileId,
             bool nutritionProductsRefs,
             bool nutritionMealsRefs,
             bool nutritionEntriesRefs,
-            bool nutritionOutboxRefs,
+            bool syncOutboxRefs,
           })
         > {
-  $$NutritionUsersTableTableManager(
-    _$AppDatabase db,
-    $NutritionUsersTable table,
-  ) : super(
+  $$SyncUsersTableTableManager(_$AppDatabase db, $SyncUsersTable table)
+    : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$NutritionUsersTableFilterComposer($db: db, $table: table),
+              $$SyncUsersTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$NutritionUsersTableOrderingComposer($db: db, $table: table),
+              $$SyncUsersTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$NutritionUsersTableAnnotationComposer($db: db, $table: table),
+              $$SyncUsersTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
                 Value<int?> localSlot = const Value.absent(),
                 Value<int?> profileId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => NutritionUsersCompanion(
+              }) => SyncUsersCompanion(
                 id: id,
                 localSlot: localSlot,
                 profileId: profileId,
@@ -5057,7 +5049,7 @@ class $$NutritionUsersTableTableManager
                 Value<int?> localSlot = const Value.absent(),
                 Value<int?> profileId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => NutritionUsersCompanion.insert(
+              }) => SyncUsersCompanion.insert(
                 id: id,
                 localSlot: localSlot,
                 profileId: profileId,
@@ -5066,8 +5058,8 @@ class $$NutritionUsersTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable<$NutritionUsersTable, NutritionUser>(table),
-                  $$NutritionUsersTableReferences(db, table, e),
+                  e.readTable<$SyncUsersTable, SyncUser>(table),
+                  $$SyncUsersTableReferences(db, table, e),
                 ),
               )
               .toList(),
@@ -5077,7 +5069,7 @@ class $$NutritionUsersTableTableManager
                 nutritionProductsRefs = false,
                 nutritionMealsRefs = false,
                 nutritionEntriesRefs = false,
-                nutritionOutboxRefs = false,
+                syncOutboxRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -5085,7 +5077,7 @@ class $$NutritionUsersTableTableManager
                     if (nutritionProductsRefs) db.nutritionProducts,
                     if (nutritionMealsRefs) db.nutritionMeals,
                     if (nutritionEntriesRefs) db.nutritionEntries,
-                    if (nutritionOutboxRefs) db.nutritionOutbox,
+                    if (syncOutboxRefs) db.syncOutbox,
                   ],
                   addJoins:
                       <
@@ -5108,13 +5100,11 @@ class $$NutritionUsersTableTableManager
                               state.withJoin(
                                     currentTable: table,
                                     currentColumn: table.profileId,
-                                    referencedTable:
-                                        $$NutritionUsersTableReferences
-                                            ._profileIdTable(db),
-                                    referencedColumn:
-                                        $$NutritionUsersTableReferences
-                                            ._profileIdTable(db)
-                                            .id,
+                                    referencedTable: $$SyncUsersTableReferences
+                                        ._profileIdTable(db),
+                                    referencedColumn: $$SyncUsersTableReferences
+                                        ._profileIdTable(db)
+                                        .id,
                                   )
                                   as T;
                         }
@@ -5125,15 +5115,15 @@ class $$NutritionUsersTableTableManager
                     return [
                       if (nutritionProductsRefs)
                         await $_getPrefetchedData<
-                          NutritionUser,
-                          $NutritionUsersTable,
+                          SyncUser,
+                          $SyncUsersTable,
                           NutritionProduct
                         >(
                           currentTable: table,
-                          referencedTable: $$NutritionUsersTableReferences
+                          referencedTable: $$SyncUsersTableReferences
                               ._nutritionProductsRefsTable(db),
                           managerFromTypedResult: (p0) =>
-                              $$NutritionUsersTableReferences(
+                              $$SyncUsersTableReferences(
                                 db,
                                 table,
                                 p0,
@@ -5146,15 +5136,15 @@ class $$NutritionUsersTableTableManager
                         ),
                       if (nutritionMealsRefs)
                         await $_getPrefetchedData<
-                          NutritionUser,
-                          $NutritionUsersTable,
+                          SyncUser,
+                          $SyncUsersTable,
                           NutritionMeal
                         >(
                           currentTable: table,
-                          referencedTable: $$NutritionUsersTableReferences
+                          referencedTable: $$SyncUsersTableReferences
                               ._nutritionMealsRefsTable(db),
                           managerFromTypedResult: (p0) =>
-                              $$NutritionUsersTableReferences(
+                              $$SyncUsersTableReferences(
                                 db,
                                 table,
                                 p0,
@@ -5167,15 +5157,15 @@ class $$NutritionUsersTableTableManager
                         ),
                       if (nutritionEntriesRefs)
                         await $_getPrefetchedData<
-                          NutritionUser,
-                          $NutritionUsersTable,
+                          SyncUser,
+                          $SyncUsersTable,
                           NutritionEntry
                         >(
                           currentTable: table,
-                          referencedTable: $$NutritionUsersTableReferences
+                          referencedTable: $$SyncUsersTableReferences
                               ._nutritionEntriesRefsTable(db),
                           managerFromTypedResult: (p0) =>
-                              $$NutritionUsersTableReferences(
+                              $$SyncUsersTableReferences(
                                 db,
                                 table,
                                 p0,
@@ -5186,21 +5176,21 @@ class $$NutritionUsersTableTableManager
                               ),
                           typedResults: items,
                         ),
-                      if (nutritionOutboxRefs)
+                      if (syncOutboxRefs)
                         await $_getPrefetchedData<
-                          NutritionUser,
-                          $NutritionUsersTable,
-                          NutritionOutboxData
+                          SyncUser,
+                          $SyncUsersTable,
+                          SyncOutboxData
                         >(
                           currentTable: table,
-                          referencedTable: $$NutritionUsersTableReferences
-                              ._nutritionOutboxRefsTable(db),
+                          referencedTable: $$SyncUsersTableReferences
+                              ._syncOutboxRefsTable(db),
                           managerFromTypedResult: (p0) =>
-                              $$NutritionUsersTableReferences(
+                              $$SyncUsersTableReferences(
                                 db,
                                 table,
                                 p0,
-                              ).nutritionOutboxRefs,
+                              ).syncOutboxRefs,
                           referencedItemsForCurrentItem:
                               (item, referencedItems) => referencedItems.where(
                                 (e) => e.userId == item.id,
@@ -5215,24 +5205,24 @@ class $$NutritionUsersTableTableManager
       );
 }
 
-typedef $$NutritionUsersTableProcessedTableManager =
+typedef $$SyncUsersTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $NutritionUsersTable,
-      NutritionUser,
-      $$NutritionUsersTableFilterComposer,
-      $$NutritionUsersTableOrderingComposer,
-      $$NutritionUsersTableAnnotationComposer,
-      $$NutritionUsersTableCreateCompanionBuilder,
-      $$NutritionUsersTableUpdateCompanionBuilder,
-      (NutritionUser, $$NutritionUsersTableReferences),
-      NutritionUser,
+      $SyncUsersTable,
+      SyncUser,
+      $$SyncUsersTableFilterComposer,
+      $$SyncUsersTableOrderingComposer,
+      $$SyncUsersTableAnnotationComposer,
+      $$SyncUsersTableCreateCompanionBuilder,
+      $$SyncUsersTableUpdateCompanionBuilder,
+      (SyncUser, $$SyncUsersTableReferences),
+      SyncUser,
       PrefetchHooks Function({
         bool profileId,
         bool nutritionProductsRefs,
         bool nutritionMealsRefs,
         bool nutritionEntriesRefs,
-        bool nutritionOutboxRefs,
+        bool syncOutboxRefs,
       })
     >;
 typedef $$NutritionProductsTableCreateCompanionBuilder =
@@ -5279,16 +5269,15 @@ final class $$NutritionProductsTableReferences
     super.$_typedResult,
   );
 
-  static $NutritionUsersTable _userIdTable(_$AppDatabase db) => db
-      .nutritionUsers
+  static $SyncUsersTable _userIdTable(_$AppDatabase db) => db.syncUsers
       .createAlias('nutrition_products__user_id__nutrition_users__id');
 
-  $$NutritionUsersTableProcessedTableManager get userId {
+  $$SyncUsersTableProcessedTableManager get userId {
     final $_column = $_itemColumn<String>('user_id')!;
 
-    final manager = $$NutritionUsersTableTableManager(
+    final manager = $$SyncUsersTableTableManager(
       $_db,
-      $_db.nutritionUsers,
+      $_db.syncUsers,
     ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_userIdTable($_db));
     if (item == null) return manager;
@@ -5357,20 +5346,20 @@ class $$NutritionProductsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  $$NutritionUsersTableFilterComposer get userId {
-    final $$NutritionUsersTableFilterComposer composer = $composerBuilder(
+  $$SyncUsersTableFilterComposer get userId {
+    final $$SyncUsersTableFilterComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.userId,
-      referencedTable: $db.nutritionUsers,
+      referencedTable: $db.syncUsers,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$NutritionUsersTableFilterComposer(
+          }) => $$SyncUsersTableFilterComposer(
             $db: $db,
-            $table: $db.nutritionUsers,
+            $table: $db.syncUsers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -5440,20 +5429,20 @@ class $$NutritionProductsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  $$NutritionUsersTableOrderingComposer get userId {
-    final $$NutritionUsersTableOrderingComposer composer = $composerBuilder(
+  $$SyncUsersTableOrderingComposer get userId {
+    final $$SyncUsersTableOrderingComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.userId,
-      referencedTable: $db.nutritionUsers,
+      referencedTable: $db.syncUsers,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$NutritionUsersTableOrderingComposer(
+          }) => $$SyncUsersTableOrderingComposer(
             $db: $db,
-            $table: $db.nutritionUsers,
+            $table: $db.syncUsers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -5507,20 +5496,20 @@ class $$NutritionProductsTableAnnotationComposer
   GeneratedColumn<double> get carbs =>
       $composableBuilder(column: $table.carbs, builder: (column) => column);
 
-  $$NutritionUsersTableAnnotationComposer get userId {
-    final $$NutritionUsersTableAnnotationComposer composer = $composerBuilder(
+  $$SyncUsersTableAnnotationComposer get userId {
+    final $$SyncUsersTableAnnotationComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.userId,
-      referencedTable: $db.nutritionUsers,
+      referencedTable: $db.syncUsers,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$NutritionUsersTableAnnotationComposer(
+          }) => $$SyncUsersTableAnnotationComposer(
             $db: $db,
-            $table: $db.nutritionUsers,
+            $table: $db.syncUsers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -5720,16 +5709,15 @@ final class $$NutritionMealsTableReferences
     super.$_typedResult,
   );
 
-  static $NutritionUsersTable _userIdTable(_$AppDatabase db) => db
-      .nutritionUsers
-      .createAlias('nutrition_meals__user_id__nutrition_users__id');
+  static $SyncUsersTable _userIdTable(_$AppDatabase db) =>
+      db.syncUsers.createAlias('nutrition_meals__user_id__nutrition_users__id');
 
-  $$NutritionUsersTableProcessedTableManager get userId {
+  $$SyncUsersTableProcessedTableManager get userId {
     final $_column = $_itemColumn<String>('user_id')!;
 
-    final manager = $$NutritionUsersTableTableManager(
+    final manager = $$SyncUsersTableTableManager(
       $_db,
-      $_db.nutritionUsers,
+      $_db.syncUsers,
     ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_userIdTable($_db));
     if (item == null) return manager;
@@ -5783,20 +5771,20 @@ class $$NutritionMealsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  $$NutritionUsersTableFilterComposer get userId {
-    final $$NutritionUsersTableFilterComposer composer = $composerBuilder(
+  $$SyncUsersTableFilterComposer get userId {
+    final $$SyncUsersTableFilterComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.userId,
-      referencedTable: $db.nutritionUsers,
+      referencedTable: $db.syncUsers,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$NutritionUsersTableFilterComposer(
+          }) => $$SyncUsersTableFilterComposer(
             $db: $db,
-            $table: $db.nutritionUsers,
+            $table: $db.syncUsers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -5851,20 +5839,20 @@ class $$NutritionMealsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  $$NutritionUsersTableOrderingComposer get userId {
-    final $$NutritionUsersTableOrderingComposer composer = $composerBuilder(
+  $$SyncUsersTableOrderingComposer get userId {
+    final $$SyncUsersTableOrderingComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.userId,
-      referencedTable: $db.nutritionUsers,
+      referencedTable: $db.syncUsers,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$NutritionUsersTableOrderingComposer(
+          }) => $$SyncUsersTableOrderingComposer(
             $db: $db,
-            $table: $db.nutritionUsers,
+            $table: $db.syncUsers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -5909,20 +5897,20 @@ class $$NutritionMealsTableAnnotationComposer
   GeneratedColumn<String> get kind =>
       $composableBuilder(column: $table.kind, builder: (column) => column);
 
-  $$NutritionUsersTableAnnotationComposer get userId {
-    final $$NutritionUsersTableAnnotationComposer composer = $composerBuilder(
+  $$SyncUsersTableAnnotationComposer get userId {
+    final $$SyncUsersTableAnnotationComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.userId,
-      referencedTable: $db.nutritionUsers,
+      referencedTable: $db.syncUsers,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$NutritionUsersTableAnnotationComposer(
+          }) => $$SyncUsersTableAnnotationComposer(
             $db: $db,
-            $table: $db.nutritionUsers,
+            $table: $db.syncUsers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -6119,16 +6107,15 @@ final class $$NutritionEntriesTableReferences
     super.$_typedResult,
   );
 
-  static $NutritionUsersTable _userIdTable(_$AppDatabase db) => db
-      .nutritionUsers
+  static $SyncUsersTable _userIdTable(_$AppDatabase db) => db.syncUsers
       .createAlias('nutrition_entries__user_id__nutrition_users__id');
 
-  $$NutritionUsersTableProcessedTableManager get userId {
+  $$SyncUsersTableProcessedTableManager get userId {
     final $_column = $_itemColumn<String>('user_id')!;
 
-    final manager = $$NutritionUsersTableTableManager(
+    final manager = $$SyncUsersTableTableManager(
       $_db,
-      $_db.nutritionUsers,
+      $_db.syncUsers,
     ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_userIdTable($_db));
     if (item == null) return manager;
@@ -6212,20 +6199,20 @@ class $$NutritionEntriesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  $$NutritionUsersTableFilterComposer get userId {
-    final $$NutritionUsersTableFilterComposer composer = $composerBuilder(
+  $$SyncUsersTableFilterComposer get userId {
+    final $$SyncUsersTableFilterComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.userId,
-      referencedTable: $db.nutritionUsers,
+      referencedTable: $db.syncUsers,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$NutritionUsersTableFilterComposer(
+          }) => $$SyncUsersTableFilterComposer(
             $db: $db,
-            $table: $db.nutritionUsers,
+            $table: $db.syncUsers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -6310,20 +6297,20 @@ class $$NutritionEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  $$NutritionUsersTableOrderingComposer get userId {
-    final $$NutritionUsersTableOrderingComposer composer = $composerBuilder(
+  $$SyncUsersTableOrderingComposer get userId {
+    final $$SyncUsersTableOrderingComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.userId,
-      referencedTable: $db.nutritionUsers,
+      referencedTable: $db.syncUsers,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$NutritionUsersTableOrderingComposer(
+          }) => $$SyncUsersTableOrderingComposer(
             $db: $db,
-            $table: $db.nutritionUsers,
+            $table: $db.syncUsers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -6388,20 +6375,20 @@ class $$NutritionEntriesTableAnnotationComposer
   GeneratedColumn<double> get carbs =>
       $composableBuilder(column: $table.carbs, builder: (column) => column);
 
-  $$NutritionUsersTableAnnotationComposer get userId {
-    final $$NutritionUsersTableAnnotationComposer composer = $composerBuilder(
+  $$SyncUsersTableAnnotationComposer get userId {
+    final $$SyncUsersTableAnnotationComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.userId,
-      referencedTable: $db.nutritionUsers,
+      referencedTable: $db.syncUsers,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$NutritionUsersTableAnnotationComposer(
+          }) => $$SyncUsersTableAnnotationComposer(
             $db: $db,
-            $table: $db.nutritionUsers,
+            $table: $db.syncUsers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -6577,8 +6564,8 @@ typedef $$NutritionEntriesTableProcessedTableManager =
       NutritionEntry,
       PrefetchHooks Function({bool userId})
     >;
-typedef $$NutritionOutboxTableCreateCompanionBuilder =
-    NutritionOutboxCompanion Function({
+typedef $$SyncOutboxTableCreateCompanionBuilder =
+    SyncOutboxCompanion Function({
       Value<int> sequence,
       required String mutationId,
       required String userId,
@@ -6588,8 +6575,8 @@ typedef $$NutritionOutboxTableCreateCompanionBuilder =
       required String payload,
       required DateTime createdAt,
     });
-typedef $$NutritionOutboxTableUpdateCompanionBuilder =
-    NutritionOutboxCompanion Function({
+typedef $$SyncOutboxTableUpdateCompanionBuilder =
+    SyncOutboxCompanion Function({
       Value<int> sequence,
       Value<String> mutationId,
       Value<String> userId,
@@ -6600,29 +6587,19 @@ typedef $$NutritionOutboxTableUpdateCompanionBuilder =
       Value<DateTime> createdAt,
     });
 
-final class $$NutritionOutboxTableReferences
-    extends
-        BaseReferences<
-          _$AppDatabase,
-          $NutritionOutboxTable,
-          NutritionOutboxData
-        > {
-  $$NutritionOutboxTableReferences(
-    super.$_db,
-    super.$_table,
-    super.$_typedResult,
-  );
+final class $$SyncOutboxTableReferences
+    extends BaseReferences<_$AppDatabase, $SyncOutboxTable, SyncOutboxData> {
+  $$SyncOutboxTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static $NutritionUsersTable _userIdTable(_$AppDatabase db) => db
-      .nutritionUsers
+  static $SyncUsersTable _userIdTable(_$AppDatabase db) => db.syncUsers
       .createAlias('nutrition_outbox__user_id__nutrition_users__id');
 
-  $$NutritionUsersTableProcessedTableManager get userId {
+  $$SyncUsersTableProcessedTableManager get userId {
     final $_column = $_itemColumn<String>('user_id')!;
 
-    final manager = $$NutritionUsersTableTableManager(
+    final manager = $$SyncUsersTableTableManager(
       $_db,
-      $_db.nutritionUsers,
+      $_db.syncUsers,
     ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_userIdTable($_db));
     if (item == null) return manager;
@@ -6632,9 +6609,9 @@ final class $$NutritionOutboxTableReferences
   }
 }
 
-class $$NutritionOutboxTableFilterComposer
-    extends Composer<_$AppDatabase, $NutritionOutboxTable> {
-  $$NutritionOutboxTableFilterComposer({
+class $$SyncOutboxTableFilterComposer
+    extends Composer<_$AppDatabase, $SyncOutboxTable> {
+  $$SyncOutboxTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -6676,20 +6653,20 @@ class $$NutritionOutboxTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  $$NutritionUsersTableFilterComposer get userId {
-    final $$NutritionUsersTableFilterComposer composer = $composerBuilder(
+  $$SyncUsersTableFilterComposer get userId {
+    final $$SyncUsersTableFilterComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.userId,
-      referencedTable: $db.nutritionUsers,
+      referencedTable: $db.syncUsers,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$NutritionUsersTableFilterComposer(
+          }) => $$SyncUsersTableFilterComposer(
             $db: $db,
-            $table: $db.nutritionUsers,
+            $table: $db.syncUsers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -6700,9 +6677,9 @@ class $$NutritionOutboxTableFilterComposer
   }
 }
 
-class $$NutritionOutboxTableOrderingComposer
-    extends Composer<_$AppDatabase, $NutritionOutboxTable> {
-  $$NutritionOutboxTableOrderingComposer({
+class $$SyncOutboxTableOrderingComposer
+    extends Composer<_$AppDatabase, $SyncOutboxTable> {
+  $$SyncOutboxTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -6744,20 +6721,20 @@ class $$NutritionOutboxTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  $$NutritionUsersTableOrderingComposer get userId {
-    final $$NutritionUsersTableOrderingComposer composer = $composerBuilder(
+  $$SyncUsersTableOrderingComposer get userId {
+    final $$SyncUsersTableOrderingComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.userId,
-      referencedTable: $db.nutritionUsers,
+      referencedTable: $db.syncUsers,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$NutritionUsersTableOrderingComposer(
+          }) => $$SyncUsersTableOrderingComposer(
             $db: $db,
-            $table: $db.nutritionUsers,
+            $table: $db.syncUsers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -6768,9 +6745,9 @@ class $$NutritionOutboxTableOrderingComposer
   }
 }
 
-class $$NutritionOutboxTableAnnotationComposer
-    extends Composer<_$AppDatabase, $NutritionOutboxTable> {
-  $$NutritionOutboxTableAnnotationComposer({
+class $$SyncOutboxTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SyncOutboxTable> {
+  $$SyncOutboxTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -6800,20 +6777,20 @@ class $$NutritionOutboxTableAnnotationComposer
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
-  $$NutritionUsersTableAnnotationComposer get userId {
-    final $$NutritionUsersTableAnnotationComposer composer = $composerBuilder(
+  $$SyncUsersTableAnnotationComposer get userId {
+    final $$SyncUsersTableAnnotationComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.userId,
-      referencedTable: $db.nutritionUsers,
+      referencedTable: $db.syncUsers,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$NutritionUsersTableAnnotationComposer(
+          }) => $$SyncUsersTableAnnotationComposer(
             $db: $db,
-            $table: $db.nutritionUsers,
+            $table: $db.syncUsers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -6824,34 +6801,32 @@ class $$NutritionOutboxTableAnnotationComposer
   }
 }
 
-class $$NutritionOutboxTableTableManager
+class $$SyncOutboxTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $NutritionOutboxTable,
-          NutritionOutboxData,
-          $$NutritionOutboxTableFilterComposer,
-          $$NutritionOutboxTableOrderingComposer,
-          $$NutritionOutboxTableAnnotationComposer,
-          $$NutritionOutboxTableCreateCompanionBuilder,
-          $$NutritionOutboxTableUpdateCompanionBuilder,
-          (NutritionOutboxData, $$NutritionOutboxTableReferences),
-          NutritionOutboxData,
+          $SyncOutboxTable,
+          SyncOutboxData,
+          $$SyncOutboxTableFilterComposer,
+          $$SyncOutboxTableOrderingComposer,
+          $$SyncOutboxTableAnnotationComposer,
+          $$SyncOutboxTableCreateCompanionBuilder,
+          $$SyncOutboxTableUpdateCompanionBuilder,
+          (SyncOutboxData, $$SyncOutboxTableReferences),
+          SyncOutboxData,
           PrefetchHooks Function({bool userId})
         > {
-  $$NutritionOutboxTableTableManager(
-    _$AppDatabase db,
-    $NutritionOutboxTable table,
-  ) : super(
+  $$SyncOutboxTableTableManager(_$AppDatabase db, $SyncOutboxTable table)
+    : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$NutritionOutboxTableFilterComposer($db: db, $table: table),
+              $$SyncOutboxTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$NutritionOutboxTableOrderingComposer($db: db, $table: table),
+              $$SyncOutboxTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$NutritionOutboxTableAnnotationComposer($db: db, $table: table),
+              $$SyncOutboxTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> sequence = const Value.absent(),
@@ -6862,7 +6837,7 @@ class $$NutritionOutboxTableTableManager
                 Value<String> operation = const Value.absent(),
                 Value<String> payload = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
-              }) => NutritionOutboxCompanion(
+              }) => SyncOutboxCompanion(
                 sequence: sequence,
                 mutationId: mutationId,
                 userId: userId,
@@ -6882,7 +6857,7 @@ class $$NutritionOutboxTableTableManager
                 required String operation,
                 required String payload,
                 required DateTime createdAt,
-              }) => NutritionOutboxCompanion.insert(
+              }) => SyncOutboxCompanion.insert(
                 sequence: sequence,
                 mutationId: mutationId,
                 userId: userId,
@@ -6895,10 +6870,8 @@ class $$NutritionOutboxTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable<$NutritionOutboxTable, NutritionOutboxData>(
-                    table,
-                  ),
-                  $$NutritionOutboxTableReferences(db, table, e),
+                  e.readTable<$SyncOutboxTable, SyncOutboxData>(table),
+                  $$SyncOutboxTableReferences(db, table, e),
                 ),
               )
               .toList(),
@@ -6927,13 +6900,11 @@ class $$NutritionOutboxTableTableManager
                           state.withJoin(
                                 currentTable: table,
                                 currentColumn: table.userId,
-                                referencedTable:
-                                    $$NutritionOutboxTableReferences
-                                        ._userIdTable(db),
-                                referencedColumn:
-                                    $$NutritionOutboxTableReferences
-                                        ._userIdTable(db)
-                                        .id,
+                                referencedTable: $$SyncOutboxTableReferences
+                                    ._userIdTable(db),
+                                referencedColumn: $$SyncOutboxTableReferences
+                                    ._userIdTable(db)
+                                    .id,
                               )
                               as T;
                     }
@@ -6949,18 +6920,18 @@ class $$NutritionOutboxTableTableManager
       );
 }
 
-typedef $$NutritionOutboxTableProcessedTableManager =
+typedef $$SyncOutboxTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $NutritionOutboxTable,
-      NutritionOutboxData,
-      $$NutritionOutboxTableFilterComposer,
-      $$NutritionOutboxTableOrderingComposer,
-      $$NutritionOutboxTableAnnotationComposer,
-      $$NutritionOutboxTableCreateCompanionBuilder,
-      $$NutritionOutboxTableUpdateCompanionBuilder,
-      (NutritionOutboxData, $$NutritionOutboxTableReferences),
-      NutritionOutboxData,
+      $SyncOutboxTable,
+      SyncOutboxData,
+      $$SyncOutboxTableFilterComposer,
+      $$SyncOutboxTableOrderingComposer,
+      $$SyncOutboxTableAnnotationComposer,
+      $$SyncOutboxTableCreateCompanionBuilder,
+      $$SyncOutboxTableUpdateCompanionBuilder,
+      (SyncOutboxData, $$SyncOutboxTableReferences),
+      SyncOutboxData,
       PrefetchHooks Function({bool userId})
     >;
 
@@ -6971,14 +6942,14 @@ class $AppDatabaseManager {
       $$LocalProfilesTableTableManager(_db, _db.localProfiles);
   $$LocalRemindersTableTableManager get localReminders =>
       $$LocalRemindersTableTableManager(_db, _db.localReminders);
-  $$NutritionUsersTableTableManager get nutritionUsers =>
-      $$NutritionUsersTableTableManager(_db, _db.nutritionUsers);
+  $$SyncUsersTableTableManager get syncUsers =>
+      $$SyncUsersTableTableManager(_db, _db.syncUsers);
   $$NutritionProductsTableTableManager get nutritionProducts =>
       $$NutritionProductsTableTableManager(_db, _db.nutritionProducts);
   $$NutritionMealsTableTableManager get nutritionMeals =>
       $$NutritionMealsTableTableManager(_db, _db.nutritionMeals);
   $$NutritionEntriesTableTableManager get nutritionEntries =>
       $$NutritionEntriesTableTableManager(_db, _db.nutritionEntries);
-  $$NutritionOutboxTableTableManager get nutritionOutbox =>
-      $$NutritionOutboxTableTableManager(_db, _db.nutritionOutbox);
+  $$SyncOutboxTableTableManager get syncOutbox =>
+      $$SyncOutboxTableTableManager(_db, _db.syncOutbox);
 }

@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:uuid/uuid.dart';
 import 'package:fitness_assistant/core/db/app_database.dart';
+import 'package:fitness_assistant/core/sync/sync_writer.dart';
 import 'package:fitness_assistant/data/nutrition_repository.dart';
 import 'package:fitness_assistant/data/profile_repository.dart';
 import 'package:fitness_assistant/models/daily_ration.dart';
@@ -75,7 +76,7 @@ void main() {
         (await repo.days(monday, 7)).map((d) => d.entryCount),
         everyElement(0),
       );
-      final queue = await db.select(db.nutritionOutbox).get();
+      final queue = await db.select(db.syncOutbox).get();
       expect(queue.last.operation, 'delete');
       expect(jsonDecode(queue.last.payload)['data'], isNull);
       expect(queue.map((e) => e.mutationId).toSet().length, queue.length);
@@ -89,7 +90,7 @@ void main() {
         ),
         throwsStateError,
       );
-      expect(await db.select(db.nutritionOutbox).get(), hasLength(count));
+      expect(await db.select(db.syncOutbox).get(), hasLength(count));
     },
   );
 
@@ -185,7 +186,7 @@ void main() {
 
   test('Invalid input never leaves partial meals or outbox records', () async {
     await repo.saveProduct(product);
-    final queueCount = (await db.select(db.nutritionOutbox).get()).length;
+    final queueCount = (await db.select(db.syncOutbox).get()).length;
     for (final grams in [0.0, -1.0, double.nan, double.infinity, 10001.0]) {
       await expectLater(
         repo.saveEntry(
@@ -207,7 +208,7 @@ void main() {
       throwsArgumentError,
     );
     expect(await db.select(db.nutritionMeals).get(), isEmpty);
-    expect(await db.select(db.nutritionOutbox).get(), hasLength(queueCount));
+    expect(await db.select(db.syncOutbox).get(), hasLength(queueCount));
     expect(
       () => const Product(
         id: 'p',
@@ -227,7 +228,7 @@ void main() {
       final first = await repo.userId();
       expect(await NutritionRepository(db).userId(), first);
       await ProfileRepository(db).saveProfile(const UserProfile(name: 'Денис'));
-      expect((await db.select(db.nutritionUsers).getSingle()).profileId, 1);
+      expect((await db.select(db.syncUsers).getSingle()).profileId, 1);
     },
   );
 
@@ -251,7 +252,7 @@ void main() {
       repository = NutritionRepository(disk);
       expect(await repository.userId(), user);
       expect((await repository.days(monday, 1)).single.totals.calories, 16.25);
-      expect(await disk.select(disk.nutritionOutbox).get(), hasLength(3));
+      expect(await disk.select(disk.syncOutbox).get(), hasLength(3));
     } finally {
       await disk.close();
       await dir.delete(recursive: true);
@@ -262,7 +263,7 @@ void main() {
     'Real schema v1 file migrates to v2 without losing profile or reminder',
     () async {
       await db.close();
-    final dir = await Directory.systemTemp.createTemp('nutrition_migration_');
+      final dir = await Directory.systemTemp.createTemp('nutrition_migration_');
       final file = File('${dir.path}/fitness.sqlite');
       final legacy = sqlite3.open(file.path);
       legacy.execute(
@@ -291,7 +292,7 @@ void main() {
         expect(
           (await migrated.customSelect('PRAGMA user_version').getSingle())
               .read<int>('user_version'),
-          2,
+          3,
         );
         final indexes = await migrated
             .customSelect(
@@ -305,4 +306,74 @@ void main() {
       }
     },
   );
+
+  test(
+    'Outbox is shared: other modules enqueue, nutrition ignores them',
+    () async {
+      final sync = SyncWriter(db);
+      final owner = await sync.userId();
+      await sync.enqueue(
+        owner: owner,
+        entity: 'workout_session',
+        id: const Uuid().v4(),
+        operation: 'upsert',
+        revision: 1,
+        baseVersion: 0,
+        data: {'title': 'Ноги'},
+      );
+      expect(await db.select(db.syncOutbox).get(), hasLength(1));
+      expect(await NutritionRepository(db).pendingMutations(), isEmpty);
+    },
+  );
+
+  test('Real schema v2 file migrates to v3 keeping the outbox queue', () async {
+    await db.close();
+    final dir = await Directory.systemTemp.createTemp('outbox_migration_');
+    final file = File('${dir.path}/fitness.sqlite');
+    final legacy = sqlite3.open(file.path);
+    legacy.execute(
+      'CREATE TABLE local_profiles (id INTEGER NOT NULL PRIMARY KEY CHECK(id=1), name TEXT NOT NULL, birth_date INTEGER, sex TEXT NOT NULL, height_cm REAL, weight_kg REAL, target_weight_kg REAL, activity TEXT NOT NULL, goal TEXT NOT NULL, program_id TEXT, updated_at INTEGER NOT NULL)',
+    );
+    legacy.execute(
+      'CREATE TABLE nutrition_users (id TEXT NOT NULL PRIMARY KEY, local_slot INTEGER CHECK(local_slot=1), profile_id INTEGER REFERENCES local_profiles(id) ON DELETE SET NULL)',
+    );
+    legacy.execute(
+      "CREATE TABLE nutrition_outbox (sequence INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, mutation_id TEXT NOT NULL UNIQUE, user_id TEXT NOT NULL REFERENCES nutrition_users(id), entity TEXT NOT NULL CHECK(entity IN ('product','meal','entry')), entity_id TEXT NOT NULL, operation TEXT NOT NULL CHECK(operation IN ('upsert','delete')), payload TEXT NOT NULL, created_at INTEGER NOT NULL)",
+    );
+    legacy.execute(
+      'CREATE INDEX nutrition_outbox_order ON nutrition_outbox(sequence)',
+    );
+    legacy.execute("INSERT INTO nutrition_users VALUES('u1',1,NULL)");
+    legacy.execute(
+      "INSERT INTO nutrition_outbox VALUES(1,'m1','u1','product','p1','upsert','{}',1700000000)",
+    );
+    legacy.execute('PRAGMA user_version=2');
+    legacy.close();
+    final migrated = AppDatabase(NativeDatabase(file));
+    try {
+      expect(await migrated.select(migrated.syncOutbox).get(), hasLength(1));
+      await SyncWriter(migrated).enqueue(
+        owner: 'u1',
+        entity: 'workout_session',
+        id: const Uuid().v4(),
+        operation: 'delete',
+        revision: 2,
+        baseVersion: 1,
+      );
+      expect(await migrated.select(migrated.syncOutbox).get(), hasLength(2));
+      expect(
+        await migrated.customSelect('PRAGMA foreign_key_check').get(),
+        isEmpty,
+      );
+      final indexes = await migrated
+          .customSelect(
+            "SELECT name FROM sqlite_master WHERE type='index' AND name='nutrition_outbox_order'",
+          )
+          .get();
+      expect(indexes, hasLength(1));
+    } finally {
+      await migrated.close();
+      await dir.delete(recursive: true);
+    }
+  });
 }

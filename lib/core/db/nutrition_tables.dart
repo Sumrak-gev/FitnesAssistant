@@ -1,38 +1,11 @@
 // ignore_for_file: recursive_getters
 import 'package:drift/drift.dart';
-import 'app_database.dart';
-
-@TableIndex.sql(
-  'CREATE UNIQUE INDEX nutrition_local_user ON nutrition_users(local_slot) WHERE local_slot IS NOT NULL',
-)
-class NutritionUsers extends Table {
-  TextColumn get id => text()();
-  IntColumn get localSlot => integer().nullable().check(localSlot.equals(1))();
-  IntColumn get profileId => integer().nullable().references(
-    LocalProfiles,
-    #id,
-    onDelete: KeyAction.setNull,
-  )();
-  @override
-  Set<Column> get primaryKey => {id};
-}
-
-mixin NutritionMetadata on Table {
-  TextColumn get userId => text().references(NutritionUsers, #id)();
-  DateTimeColumn get updatedAt => dateTime()();
-  DateTimeColumn get deletedAt => dateTime().nullable()();
-  IntColumn get localRevision => integer()
-      .withDefault(const Constant(1))
-      .check(localRevision.isBiggerThanValue(0))();
-  IntColumn get serverVersion => integer()
-      .withDefault(const Constant(0))
-      .check(serverVersion.isBiggerOrEqualValue(0))();
-}
+import 'sync_tables.dart';
 
 @TableIndex.sql(
   'CREATE INDEX nutrition_products_owner_name ON nutrition_products(user_id, deleted_at, name)',
 )
-class NutritionProducts extends Table with NutritionMetadata {
+class NutritionProducts extends Table with SyncMetadata {
   TextColumn get id => text()();
   TextColumn get name => text().withLength(min: 1, max: 120)();
   RealColumn get calories => real().check(calories.isBetweenValues(0, 900))();
@@ -55,7 +28,7 @@ class NutritionProducts extends Table with NutritionMetadata {
 @TableIndex.sql(
   'CREATE INDEX nutrition_meals_owner_day ON nutrition_meals(user_id, day, deleted_at)',
 )
-class NutritionMeals extends Table with NutritionMetadata {
+class NutritionMeals extends Table with SyncMetadata {
   TextColumn get id => text()();
   TextColumn get day => text().withLength(min: 10, max: 10)();
   TextColumn get kind =>
@@ -75,7 +48,7 @@ class NutritionMeals extends Table with NutritionMetadata {
 @TableIndex.sql(
   'CREATE INDEX nutrition_entries_product ON nutrition_entries(user_id, product_id)',
 )
-class NutritionEntries extends Table with NutritionMetadata {
+class NutritionEntries extends Table with SyncMetadata {
   TextColumn get id => text()();
   TextColumn get mealId => text()();
   TextColumn get productId => text()();
@@ -95,20 +68,4 @@ class NutritionEntries extends Table with NutritionMetadata {
     'FOREIGN KEY (product_id, user_id) REFERENCES nutrition_products(id, user_id)',
     'CHECK (protein + fat + carbs <= 100.1)',
   ];
-}
-
-@TableIndex.sql(
-  'CREATE INDEX nutrition_outbox_order ON nutrition_outbox(sequence)',
-)
-class NutritionOutbox extends Table {
-  IntColumn get sequence => integer().autoIncrement()();
-  TextColumn get mutationId => text().unique()();
-  TextColumn get userId => text().references(NutritionUsers, #id)();
-  TextColumn get entity =>
-      text().check(entity.isIn(['product', 'meal', 'entry']))();
-  TextColumn get entityId => text()();
-  TextColumn get operation =>
-      text().check(operation.isIn(['upsert', 'delete']))();
-  TextColumn get payload => text()();
-  DateTimeColumn get createdAt => dateTime()();
 }
