@@ -39,7 +39,7 @@ jobs:
         run: |
           alembic upgrade head
           alembic check
-          pytest -q
+          python -m pytest -q
           uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/fitness-api.log 2>&1 &
       - run: |
           for attempt in $(seq 1 30); do
