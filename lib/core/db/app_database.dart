@@ -3,6 +3,7 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'nutrition_tables.dart';
+import 'sync_tables.dart';
 
 part 'app_database.g.dart';
 
@@ -37,11 +38,11 @@ class LocalReminders extends Table {
   tables: [
     LocalProfiles,
     LocalReminders,
-    NutritionUsers,
+    SyncUsers,
     NutritionProducts,
     NutritionMeals,
     NutritionEntries,
-    NutritionOutbox,
+    SyncOutbox,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -49,21 +50,25 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'fitness_assistant'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (migrator) => migrator.createAll(),
     onUpgrade: (migrator, from, to) => transaction(() async {
       if (from < 2) {
-        await migrator.createTable(nutritionUsers);
+        await migrator.createTable(syncUsers);
         await migrator.createTable(nutritionProducts);
         await migrator.createTable(nutritionMeals);
         await migrator.createTable(nutritionEntries);
-        await migrator.createTable(nutritionOutbox);
+        await migrator.createTable(syncOutbox);
         for (final index in allSchemaEntities.whereType<Index>()) {
           await migrator.createIndex(index);
         }
+      }
+      if (from == 2) {
+        // v3: очередь стала общей для модулей — снимаем жёсткий CHECK по списку сущностей.
+        await migrator.alterTable(TableMigration(syncOutbox));
       }
     }),
     beforeOpen: (_) => customStatement('PRAGMA foreign_keys = ON'),

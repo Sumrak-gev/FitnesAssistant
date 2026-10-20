@@ -3,13 +3,15 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 import '../core/api/nutrition_contract.dart';
 import '../core/db/app_database.dart';
+import '../core/sync/sync_writer.dart';
 import '../models/daily_ration.dart';
 import '../models/product.dart';
 
 class NutritionRepository {
-  NutritionRepository(this.database, {this.accountId});
+  NutritionRepository(this.database, {String? accountId})
+    : _sync = SyncWriter(database, accountId: accountId);
   final AppDatabase database;
-  final String? accountId;
+  final SyncWriter _sync;
   static const _uuid = Uuid();
 
   /// One head mutation per entity. Sending/acknowledging requires the sync layer.
@@ -17,8 +19,11 @@ class NutritionRepository {
     if (limit < 1 || limit > 100) throw ArgumentError('Размер пакета: 1–100.');
     final owner = await userId();
     final rows =
-        await (database.select(database.nutritionOutbox)
-              ..where((o) => o.userId.equals(owner))
+        await (database.select(database.syncOutbox)
+              ..where(
+                (o) =>
+                    o.userId.equals(owner) & o.entity.isIn(nutritionEntities),
+              )
               ..orderBy([(o) => OrderingTerm.asc(o.sequence)])
               ..limit(limit))
             .get();
@@ -36,36 +41,7 @@ class NutritionRepository {
         .toList();
   }
 
-  Future<String> userId() async {
-    final existing =
-        await (database.select(database.nutritionUsers)..where(
-              (u) => accountId == null
-                  ? u.localSlot.equals(1)
-                  : u.id.equals(accountId!),
-            ))
-            .getSingleOrNull();
-    if (existing != null) return existing.id;
-    final profile = await database
-        .select(database.localProfiles)
-        .getSingleOrNull();
-    await database
-        .into(database.nutritionUsers)
-        .insert(
-          NutritionUsersCompanion.insert(
-            id: accountId ?? _uuid.v4(),
-            localSlot: Value(accountId == null ? 1 : null),
-            profileId: Value(accountId == null ? profile?.id : null),
-          ),
-          mode: InsertMode.insertOrIgnore,
-        );
-    return (await (database.select(database.nutritionUsers)..where(
-              (u) => accountId == null
-                  ? u.localSlot.equals(1)
-                  : u.id.equals(accountId!),
-            ))
-            .getSingle())
-        .id;
-  }
+  Future<String> userId() => _sync.userId();
 
   Future<void> _enqueue(
     String owner,
@@ -75,26 +51,15 @@ class NutritionRepository {
     int revision,
     int baseVersion,
     Map<String, dynamic> data,
-  ) async {
-    await database
-        .into(database.nutritionOutbox)
-        .insert(
-          NutritionOutboxCompanion.insert(
-            mutationId: _uuid.v4(),
-            userId: owner,
-            entity: entity,
-            entityId: id,
-            operation: operation,
-            payload: jsonEncode({
-              'id': id,
-              'baseVersion': baseVersion,
-              'clientRevision': revision,
-              'data': operation == 'delete' ? null : data,
-            }),
-            createdAt: DateTime.now().toUtc(),
-          ),
-        );
-  }
+  ) => _sync.enqueue(
+    owner: owner,
+    entity: entity,
+    id: id,
+    operation: operation,
+    revision: revision,
+    baseVersion: baseVersion,
+    data: data,
+  );
 
   Product _product(NutritionProduct row) => Product(
     id: row.id,

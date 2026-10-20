@@ -1,5 +1,8 @@
 import 'package:uuid/uuid.dart';
 
+/// Сущности модуля питания в общей очереди синхронизации.
+const nutritionEntities = ['product', 'meal', 'entry'];
+
 /// Shared envelope from docs/nutrition-openapi.json. Transport/authentication are separate.
 class NutritionMutation {
   NutritionMutation({
@@ -13,7 +16,7 @@ class NutritionMutation {
   }) {
     if (!Uuid.isValidUUID(fromString: mutationId) ||
         !Uuid.isValidUUID(fromString: id) ||
-        !['product', 'meal', 'entry'].contains(entity) ||
+        !nutritionEntities.contains(entity) ||
         !['upsert', 'delete'].contains(operation) ||
         baseVersion < 0 ||
         clientRevision < 1 ||
