@@ -80,45 +80,8 @@ class _JourneyPainter extends CustomPainter {
     final strongPaint = Paint()
       ..color = Colors.white.withValues(alpha: strongActive ? 1 : .64);
 
-    canvas.drawCircle(const Offset(80, 19), 11, slimPaint);
-    canvas.drawPath(
-      Path()
-        ..moveTo(69, 35)
-        ..lineTo(91, 35)
-        ..lineTo(88, 76)
-        ..lineTo(72, 76)
-        ..close(),
-      slimPaint,
-    );
-    final slimLimbs = Paint()
-      ..color = slimPaint.color
-      ..strokeWidth = 8
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(const Offset(72, 44), const Offset(61, 69), slimLimbs);
-    canvas.drawLine(const Offset(88, 44), const Offset(99, 69), slimLimbs);
-    canvas.drawLine(const Offset(76, 75), const Offset(71, 100), slimLimbs);
-    canvas.drawLine(const Offset(84, 75), const Offset(89, 100), slimLimbs);
-
-    canvas.drawCircle(const Offset(240, 18), 12, strongPaint);
-    canvas.drawPath(
-      Path()
-        ..moveTo(211, 38)
-        ..lineTo(225, 33)
-        ..lineTo(255, 33)
-        ..lineTo(269, 38)
-        ..lineTo(255, 75)
-        ..lineTo(225, 75)
-        ..close(),
-      strongPaint,
-    );
-    final strongLimbs = Paint()
-      ..color = strongPaint.color
-      ..strokeWidth = 12
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(const Offset(217, 42), const Offset(205, 67), strongLimbs);
-    canvas.drawLine(const Offset(263, 42), const Offset(275, 67), strongLimbs);
-    canvas.drawLine(const Offset(233, 75), const Offset(229, 100), strongLimbs);
-    canvas.drawLine(const Offset(247, 75), const Offset(251, 100), strongLimbs);
+    canvas.drawPath(_silhouette(80, strong: false), slimPaint);
+    canvas.drawPath(_silhouette(240, strong: true), strongPaint);
 
     // The small star sits on the strong figure's chest.
     final star = Paint()
@@ -158,6 +121,40 @@ class _JourneyPainter extends CustomPainter {
       arrow,
     );
     canvas.restore();
+  }
+
+  Path _silhouette(double x, {required bool strong}) {
+    final shoulder = strong ? 25.0 : 17.0;
+    final armOuter = strong ? 40.0 : 30.0;
+    final armInner = strong ? 24.0 : 17.0;
+    final waist = strong ? 15.0 : 11.0;
+    final legOuter = strong ? 22.0 : 18.0;
+    final legInner = strong ? 7.0 : 5.0;
+    return Path()
+      ..addOval(Rect.fromCircle(center: Offset(x, 18), radius: 12))
+      ..moveTo(x - 6, 27)
+      ..quadraticBezierTo(x, 30, x + 6, 27)
+      ..cubicTo(x + shoulder, 28, x + shoulder + 4, 34, x + shoulder + 6, 43)
+      ..lineTo(x + armOuter, 65)
+      ..quadraticBezierTo(x + armOuter + 5, 73, x + armOuter - 1, 77)
+      ..quadraticBezierTo(x + armOuter - 6, 80, x + armOuter - 10, 73)
+      ..lineTo(x + armInner, 54)
+      ..quadraticBezierTo(x + waist + 5, 68, x + waist, 75)
+      ..lineTo(x + legOuter, 99)
+      ..quadraticBezierTo(x + legOuter + 2, 106, x + legOuter - 4, 106)
+      ..lineTo(x + legInner, 106)
+      ..lineTo(x, 82)
+      ..lineTo(x - legInner, 106)
+      ..lineTo(x - legOuter + 4, 106)
+      ..quadraticBezierTo(x - legOuter - 2, 106, x - legOuter, 99)
+      ..lineTo(x - waist, 75)
+      ..quadraticBezierTo(x - waist - 5, 68, x - armInner, 54)
+      ..lineTo(x - armOuter + 10, 73)
+      ..quadraticBezierTo(x - armOuter + 6, 80, x - armOuter + 1, 77)
+      ..quadraticBezierTo(x - armOuter - 5, 73, x - armOuter, 65)
+      ..lineTo(x - shoulder - 6, 43)
+      ..cubicTo(x - shoulder - 4, 34, x - shoulder, 28, x - 6, 27)
+      ..close();
   }
 
   @override
