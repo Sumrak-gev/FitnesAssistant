@@ -16,13 +16,6 @@ class WorkoutRepository {
       database.transaction(() async {
         await saveProgram(program);
         await ProgressRepository(database).markWorkout(day);
-        final id = fitnessId('achievement:program_complete');
-        if (!(await _records.rows('achievement')).any((r) => r.id == id)) {
-          await _records.save('achievement', id, {
-            'key': 'program_complete',
-            'unlocked': true,
-          });
-        }
       });
 
   static const _starterExercises = [

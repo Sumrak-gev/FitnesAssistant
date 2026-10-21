@@ -104,6 +104,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'nutrition-add',
         onPressed: () => _edit(),
         icon: const Icon(Icons.add),
         label: const Text('Добавить еду'),
@@ -260,10 +261,23 @@ class _NutritionScreenState extends State<NutritionScreen> {
   Widget _mealCard(DailyRation day, MealKind kind) {
     final matches = day.meals.where((m) => m.kind == kind);
     final meal = matches.isEmpty ? null : matches.first;
+    final icon = switch (kind) {
+      MealKind.breakfast => Icons.wb_sunny_outlined,
+      MealKind.lunch => Icons.lunch_dining,
+      MealKind.dinner => Icons.nightlight_outlined,
+      MealKind.snack => Icons.local_cafe_outlined,
+    };
     return Card(
       child: Column(
         children: [
           ListTile(
+            leading: CircleAvatar(
+              backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+              child: Icon(
+                icon,
+                color: Theme.of(context).colorScheme.onSecondaryContainer,
+              ),
+            ),
             title: Text(kind.label),
             subtitle: Text(
               '${meal?.totals.calories.toStringAsFixed(0) ?? '0'} ккал',
@@ -296,6 +310,15 @@ class _NutritionScreenState extends State<NutritionScreen> {
           if (meal != null)
             for (final entry in meal.entries)
               ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.tertiaryContainer,
+                  child: Icon(
+                    Icons.restaurant_menu,
+                    color: Theme.of(context).colorScheme.onTertiaryContainer,
+                  ),
+                ),
                 title: Text(entry.product.name),
                 subtitle: Text(
                   '${entry.grams} г · ${entry.totals.calories.toStringAsFixed(0)} ккал\n'
@@ -327,19 +350,80 @@ class _TotalsCard extends StatelessWidget {
   final DailyNorm? norm;
   final int days;
   @override
-  Widget build(BuildContext context) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _line(context, 'Калории', totals.calories, norm?.calories, 'ккал'),
-          _line(context, 'Белки', totals.protein, norm?.protein, 'г'),
-          _line(context, 'Жиры', totals.fat, norm?.fat, 'г'),
-          _line(context, 'Углеводы', totals.carbs, norm?.carbs, 'г'),
-        ],
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final target = norm == null ? null : norm!.calories * days;
+    final ratio = target == null
+        ? 0.0
+        : (totals.calories / target).clamp(0.0, 1.0);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              scheme.primaryContainer.withValues(alpha: .85),
+              scheme.surfaceContainerLow,
+            ],
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Энергия ${days == 1 ? 'за день' : 'за неделю'}',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                SizedBox(
+                  width: 76,
+                  height: 76,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox.expand(
+                        child: CircularProgressIndicator(
+                          value: ratio,
+                          strokeWidth: 8,
+                          backgroundColor: scheme.surfaceContainerHighest,
+                        ),
+                      ),
+                      const Icon(Icons.bolt, size: 28),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${totals.calories.toStringAsFixed(0)} ккал',
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                      Text(
+                        target == null
+                            ? 'Заполните профиль для ориентира'
+                            : 'Ориентир ${target.toStringAsFixed(0)} ккал',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            _line(context, 'Белки', totals.protein, norm?.protein, 'г'),
+            _line(context, 'Жиры', totals.fat, norm?.fat, 'г'),
+            _line(context, 'Углеводы', totals.carbs, norm?.carbs, 'г'),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
+
   Widget _line(
     BuildContext context,
     String label,

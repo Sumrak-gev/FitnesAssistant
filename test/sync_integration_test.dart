@@ -120,7 +120,7 @@ void main() {
           (await ProgressRepository(b).getLogs()).single.workoutDone,
           isTrue,
         );
-        expect(await FitnessRepository(b).rows('achievement'), hasLength(1));
+        expect(await FitnessRepository(b).rows('achievement'), isEmpty);
         expect(await workouts.getPrograms(), isNotEmpty);
 
         // A user can edit the same product while its preceding revision is in flight.

@@ -155,7 +155,7 @@ void main() {
         closeTo(276.1, .0001),
       );
       await capture(tester, 'nutrition-day');
-      await tester.ensureVisible(find.text('Тестовая овсянка'));
+      await tester.scrollUntilVisible(find.text('Тестовая овсянка'), 250);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Тестовая овсянка'));
       await tester.pumpAndSettle();
@@ -184,6 +184,12 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Неделя'));
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text(
+          'Сумма за все 7 дней. День без записей не означает, что вы не ели.',
+        ),
+        240,
+      );
       expect(
         find.text(
           'Сумма за все 7 дней. День без записей не означает, что вы не ели.',
@@ -191,9 +197,12 @@ void main() {
         findsOneWidget,
       );
       await capture(tester, 'nutrition-week');
+      await tester.scrollUntilVisible(find.text('День'), -240);
+      await tester.drag(find.byType(ListView).first, const Offset(0, 180));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('День'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.byTooltip('Удалить запись'));
+      await tester.scrollUntilVisible(find.byTooltip('Удалить запись'), 240);
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Удалить запись'));
       await tester.pumpAndSettle();
@@ -202,13 +211,24 @@ void main() {
       expect((await repo.days(today, 1)).single.entryCount, 0);
       await tester.tap(find.text('Тренировки').last);
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Ноги и грудь — базовый уровень'),
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.text('Ноги и грудь — базовый уровень'), findsOneWidget);
-      await tester.tap(find.text('Достижения').last);
+      await capture(tester, 'workouts');
+      await tester.tap(find.text('Прогресс').last);
       await tester.pumpAndSettle();
-      expect(find.text('Первая неделя'), findsOneWidget);
-      await tester.tap(find.text('Профиль').last);
+      expect(find.text('Уровень'), findsOneWidget);
+      await capture(tester, 'progress');
+      await tester.tap(find.text('Настройки').last);
       await tester.pumpAndSettle();
       expect(find.text('Денис'), findsOneWidget);
+      await capture(tester, 'settings');
+      await tester.ensureVisible(find.text('Палитра'));
+      await tester.pumpAndSettle();
+      await capture(tester, 'settings-palette');
       await tester.ensureVisible(find.text('Уведомления'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Уведомления'));

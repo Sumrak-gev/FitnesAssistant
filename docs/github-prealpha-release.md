@@ -1,4 +1,4 @@
-# Проверка Android и подготовка выпуска 0.2.0
+# Проверка Android и подготовка выпуска 0.3.0 pre-alpha
 
 Ветка Drevniy_Jomolungmik основана на main; merge в main выполняется после проверок.
 Ключи подписи, .env, базы, build и локальные SDK в Git не включаются.
@@ -6,7 +6,7 @@
 ## Автоматическая проверка
 
 - `flutter analyze`, `flutter test`, тест обмена с настоящим API через TEST_API_URL.
-- `pytest -q` на отдельной PostgreSQL fitness_test, `alembic upgrade head` и `alembic check`.
+- `python -m pytest -q` на отдельной PostgreSQL fitness_test, `alembic upgrade head` и `alembic check`.
 - Debug APK с эмуляторным URL; release/appbundle со своим приватным ключом,
   HTTPS API_URL, --obfuscate и --split-debug-info.
 - CI: .github/workflows/quality.yml.
@@ -20,9 +20,11 @@
 4. Фоновая отправка: включить сеть, свернуть приложение; проверить WorkManager через
    `adb shell dumpsys jobscheduler` и появление данных на втором устройстве.
    Android определяет время запуска; force-stop блокирует задачи до ручного запуска приложения.
-5. Разрешение уведомлений, точное время и восстановление после перезагрузки.
+5. Разрешение уведомлений, приблизительное время доставки и восстановление после перезагрузки.
 6. Release не принимает HTTP, debug допускает только указанные отладочные адреса.
 7. Настоящий HTTPS-домен: доверенный сертификат, /health/db, login/sync, nginx 429.
+   Проверьте с двух внешних IP, что API видит разные клиентские адреса и что подложенный
+   `X-Forwarded-For` при прямом обращении к локальному API игнорируется.
 8. pg_dump и пробное восстановление на отдельной БД; отсутствие публичного порта PostgreSQL.
 
 Наличие тестов и APK само по себе не подтверждает прохождение этих ручных шагов.

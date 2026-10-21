@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../data/workout_repository.dart';
 import '../../core/db/app_database.dart';
+import '../../core/api/api_client.dart';
+import '../../core/sync/sync_engine.dart';
 import '../../models/goal.dart';
 import '../../models/program.dart';
 import '../../services/profile_controller.dart';
+import '../../services/theme_controller.dart';
+import '../../widgets/israel_flag_icon.dart';
+import '../goals/goals_screen.dart';
 import 'legal_screen.dart';
 import 'profile_edit_screen.dart';
 import 'reminder_settings_screen.dart';
@@ -23,9 +28,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<ProfileController>();
+    final appearance = context.watch<ThemeController>();
+    final sync = context.watch<SyncEngine?>();
+    final api = context.watch<ApiClient?>();
     final profile = controller.profile;
     return Scaffold(
-      appBar: AppBar(title: const Text('Профиль')),
+      appBar: AppBar(title: const Text('Настройки')),
       body: controller.loadError != null
           ? Center(
               child: Column(
@@ -46,32 +54,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const CircleAvatar(
-                          radius: 28,
-                          child: Icon(Icons.person_outline, size: 32),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          profile.name.isEmpty ? 'Ваш профиль' : profile.name,
-                          style: Theme.of(context).textTheme.headlineSmall,
+                        Row(
+                          children: [
+                            const CircleAvatar(
+                              radius: 22,
+                              child: Icon(Icons.person_outline, size: 26),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                profile.name.isEmpty
+                                    ? 'Ваш профиль'
+                                    : profile.name,
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 8),
                         Text(
                           profile.birthDate == null
                               ? 'Добавьте личные данные, чтобы настроить профиль.'
-                              : 'Дата рождения: ${formatProfileDate(profile.birthDate!)}',
+                              : 'Рождение: ${formatProfileDate(profile.birthDate!)}',
                         ),
-                        const SizedBox(height: 8),
                         Text(
                           'Рост: ${_measure(profile.heightCm, 'см')} · Вес: ${_measure(profile.weightKg, 'кг')}',
                         ),
-                        Text('Пол: ${profile.sex.label}'),
-                        Text('Активность: ${profile.activity.label}'),
-                        const SizedBox(height: 12),
+                        Text(
+                          '${profile.sex.label} · ${profile.activity.label}',
+                        ),
+                        const SizedBox(height: 8),
                         FilledButton.tonalIcon(
                           onPressed: controller.busy
                               ? null
@@ -99,6 +115,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             type: profile.goal,
                             startDate: DateTime.now(),
                           ).label,
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const GoalsScreen(),
+                          ),
                         ),
                       ),
                       if (profile.targetWeightKg != null)
@@ -142,6 +164,101 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Тема интерфейса',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: SegmentedButton<ThemeMode>(
+                            segments: const [
+                              ButtonSegment(
+                                value: ThemeMode.system,
+                                icon: Icon(Icons.brightness_auto),
+                                label: Text('Авто'),
+                              ),
+                              ButtonSegment(
+                                value: ThemeMode.light,
+                                icon: Icon(Icons.light_mode),
+                                label: Text('День'),
+                              ),
+                              ButtonSegment(
+                                value: ThemeMode.dark,
+                                icon: Icon(Icons.dark_mode),
+                                label: Text('Ночь'),
+                              ),
+                            ],
+                            selected: {appearance.mode},
+                            onSelectionChanged: (value) =>
+                                appearance.select(value.single),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Row(
+                          children: [
+                            Text(
+                              'Палитра',
+                              style: Theme.of(context).textTheme.titleSmall,
+                            ),
+                            const SizedBox(width: 8),
+                            const IsraelFlagIcon(),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: SegmentedButton<AppPalette>(
+                            segments: const [
+                              ButtonSegment(
+                                value: AppPalette.israel,
+                                icon: IsraelFlagIcon(),
+                                label: Text('Белый и синий'),
+                              ),
+                              ButtonSegment(
+                                value: AppPalette.mint,
+                                icon: Icon(Icons.spa_outlined),
+                                label: Text('Мятный'),
+                              ),
+                            ],
+                            selected: {appearance.palette},
+                            onSelectionChanged: (value) =>
+                                appearance.selectPalette(value.single),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (sync != null)
+                  Card(
+                    child: Column(
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.cloud_sync_outlined),
+                          title: const Text('Синхронизация'),
+                          subtitle: Text(sync.status),
+                          trailing: IconButton(
+                            tooltip: 'Синхронизировать',
+                            onPressed: sync.synchronize,
+                            icon: const Icon(Icons.sync),
+                          ),
+                        ),
+                        if (api != null)
+                          ListTile(
+                            leading: const Icon(Icons.logout),
+                            title: const Text('Выйти из аккаунта'),
+                            onTap: api.logout,
+                          ),
+                      ],
+                    ),
+                  ),
                 if (controller.reminderWarning != null)
                   Padding(
                     padding: const EdgeInsets.all(12),

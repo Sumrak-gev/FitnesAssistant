@@ -92,7 +92,18 @@ void main() {
     });
 
     test('название уровня не выходит за список', () {
-      expect(service.levelFor(1000000).title, LevelService.titles.last);
+      final top = service.levelFor(1000000);
+      expect(top.title, LevelService.titles.last);
+      expect(top.level, 10);
+      expect(top.progress, 1);
+      expect(top.xpToNext, 0);
+    });
+
+    test('этап силача начинается на шестом уровне', () {
+      expect(service.levelFor(service.xpForLevel(6) - 1).level, 5);
+      final strong = service.levelFor(service.xpForLevel(6));
+      expect(strong.level, 6);
+      expect(strong.title, 'Силач');
     });
 
     test('расчёт XP', () {
@@ -108,11 +119,23 @@ void main() {
 
     test('итоги недели', () {
       final logs = [
-        DayLog(date: DateTime(2026, 10, 12), workoutDone: true, caloriesConsumed: 2300),
-        DayLog(date: DateTime(2026, 10, 14), workoutDone: true, caloriesConsumed: 2600),
+        DayLog(
+          date: DateTime(2026, 10, 12),
+          workoutDone: true,
+          caloriesConsumed: 2300,
+        ),
+        DayLog(
+          date: DateTime(2026, 10, 14),
+          workoutDone: true,
+          caloriesConsumed: 2600,
+        ),
         DayLog(date: DateTime(2026, 10, 16), workoutDone: true),
         // другая неделя — не должна учитываться
-        DayLog(date: DateTime(2026, 10, 11), workoutDone: true, caloriesConsumed: 5000),
+        DayLog(
+          date: DateTime(2026, 10, 11),
+          workoutDone: true,
+          caloriesConsumed: 5000,
+        ),
       ];
       final summary = service.build(
         logs: logs,
@@ -123,7 +146,15 @@ void main() {
       expect(summary.isCurrent, isTrue);
       expect(summary.workouts, 3);
       expect(summary.goalReached, isTrue);
-      expect(summary.workoutByDay, [true, false, true, false, true, false, false]);
+      expect(summary.workoutByDay, [
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        false,
+      ]);
       expect(summary.loggedDays, 2);
       expect(summary.daysInNorm, 1);
       expect(summary.avgCalories, 2450);

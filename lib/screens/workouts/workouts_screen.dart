@@ -9,6 +9,7 @@ import '../../data/catalog_repository.dart';
 import '../../data/workout_repository.dart';
 import '../../models/exercise.dart';
 import '../../models/program.dart';
+import 'program_builder_sheet.dart';
 
 /// Экран каталога и управления тренировочными программами.
 ///
@@ -104,6 +105,29 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Нет связи. Каталог доступен офлайн.')),
+        );
+      }
+    }
+  }
+
+  Future<void> _createProgram() async {
+    final program = await showModalBottomSheet<Program>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => ProgramBuilderSheet(exercises: _allExercises),
+    );
+    if (program == null) return;
+    try {
+      await _repository.saveProgram(program);
+      await _loadData();
+      if (mounted) _showProgramDetails(program);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Не удалось сохранить план. Повторите попытку.'),
+          ),
         );
       }
     }
@@ -433,6 +457,12 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'workout-create',
+        onPressed: _isLoading ? null : _createProgram,
+        icon: const Icon(Icons.add),
+        label: const Text('Свой план'),
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -442,14 +472,42 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  Text(
-                    'Подбери тренировку под свою цель',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Выбирай программу, изучай упражнения и при необходимости заменяй их.',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                  Container(
+                    padding: const EdgeInsets.all(22),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Theme.of(context).colorScheme.primary,
+                          Theme.of(context).colorScheme.tertiary,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(26),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.fitness_center,
+                          size: 34,
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Двигайтесь в своём темпе',
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Выберите готовую программу или соберите свой план из упражнений.',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 18),
                   TextField(
@@ -473,68 +531,81 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedGoal,
-                    decoration: const InputDecoration(
-                      labelText: 'Цель тренировки',
-                      border: OutlineInputBorder(),
+                  Card(
+                    child: ExpansionTile(
+                      leading: const Icon(Icons.tune),
+                      title: const Text('Фильтры'),
+                      subtitle: Text('$_selectedGoal · $_selectedEquipment'),
+                      childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      children: [
+                        DropdownButtonFormField<String>(
+                          initialValue: _selectedGoal,
+                          decoration: const InputDecoration(
+                            labelText: 'Цель тренировки',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: _goals
+                              .map(
+                                (goal) => DropdownMenuItem(
+                                  value: goal,
+                                  child: Text(goal),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() => _selectedGoal = value);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          initialValue: _selectedEquipment,
+                          decoration: const InputDecoration(
+                            labelText: 'Оборудование',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: _equipmentOptions
+                              .map(
+                                (item) => DropdownMenuItem(
+                                  value: item,
+                                  child: Text(item),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() => _selectedEquipment = value);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Исключить ограничения',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Упражнения с отмеченными противопоказаниями будут скрыты.',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: _contraindicationOptions.map((item) {
+                            final selected = _excludedContraindications
+                                .contains(item.toLowerCase());
+                            return FilterChip(
+                              label: Text(item),
+                              selected: selected,
+                              onSelected: (value) =>
+                                  _toggleContraindication(item, value),
+                            );
+                          }).toList(),
+                        ),
+                      ],
                     ),
-                    items: _goals
-                        .map(
-                          (goal) =>
-                              DropdownMenuItem(value: goal, child: Text(goal)),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() => _selectedGoal = value);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedEquipment,
-                    decoration: const InputDecoration(
-                      labelText: 'Оборудование',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: _equipmentOptions
-                        .map(
-                          (item) =>
-                              DropdownMenuItem(value: item, child: Text(item)),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() => _selectedEquipment = value);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Исключить ограничения',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Упражнения с отмеченными противопоказаниями будут скрыты.',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: _contraindicationOptions.map((item) {
-                      final selected = _excludedContraindications.contains(
-                        item.toLowerCase(),
-                      );
-                      return FilterChip(
-                        label: Text(item),
-                        selected: selected,
-                        onSelected: (value) =>
-                            _toggleContraindication(item, value),
-                      );
-                    }).toList(),
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -568,15 +639,26 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.all(12),
+                                      width: 58,
+                                      height: 58,
+                                      alignment: Alignment.center,
                                       decoration: BoxDecoration(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.secondaryContainer,
-                                        borderRadius: BorderRadius.circular(12),
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Theme.of(
+                                              context,
+                                            ).colorScheme.primaryContainer,
+                                            Theme.of(
+                                              context,
+                                            ).colorScheme.tertiaryContainer,
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(18),
                                       ),
                                       child: Icon(
-                                        Icons.fitness_center,
+                                        program.targetGoal == 'выносливость'
+                                            ? Icons.directions_run
+                                            : Icons.fitness_center,
                                         color: Theme.of(
                                           context,
                                         ).colorScheme.onSecondaryContainer,

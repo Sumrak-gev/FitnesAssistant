@@ -28,5 +28,6 @@ Push-cursor не используется клиентом как подтвер
 При совпадении дня/типа на двух устройствах 409 meal_alias сообщает canonicalId
 и currentVersion только для своего пользователя; клиент атомарно переписывает локальные ссылки.
 
-Сущности: product, meal, entry, profile, goal, workout, progress, achievement.
+Сущности: product, meal, entry, profile, goal, workout, progress.
+Сервер ещё принимает legacy `achievement` от старых клиентов; новый Android-клиент его не создаёт.
 Общее описание клиента — [lib/core/sync/README.md](../lib/core/sync/README.md).

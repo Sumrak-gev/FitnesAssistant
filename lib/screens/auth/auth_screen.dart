@@ -37,6 +37,10 @@ class _AuthScreenState extends State<AuthScreen> {
       ).bindAccount(session.userId);
       // Migrate pre-v4 local profile into the shared outbox once.
       final records = FitnessRepository(widget.repository.database);
+      if (!_register) {
+        // An existing account keeps its server goal when signing in on another device.
+        await records.setSetting('goalSelected', '1');
+      }
       if ((await records.rows('profile')).isEmpty) {
         final profile = await widget.repository.loadProfile();
         if (profile.name.isNotEmpty || profile.weightKg != null) {

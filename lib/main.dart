@@ -6,16 +6,18 @@ import 'core/api/api_client.dart';
 import 'core/sync/sync_engine.dart';
 import 'core/sync/background_sync.dart';
 import 'core/sync/database_lease.dart';
+import 'data/fitness_repository.dart';
 import 'screens/auth/auth_screen.dart';
 import 'data/profile_repository.dart';
 import 'services/profile_controller.dart';
 import 'services/reminder_service.dart';
+import 'services/theme_controller.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/nutrition/nutrition_screen.dart';
 import 'screens/workouts/workouts_screen.dart';
 import 'screens/goals/goals_screen.dart';
 import 'screens/progress/progress_screen.dart';
-import 'screens/achievements/achievements_screen.dart';
+import 'widgets/app_backdrop.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +43,7 @@ class _FitnessAssistantAppState extends State<FitnessAssistantApp>
   late final ProfileController _profile;
   ApiClient? _api;
   SyncEngine? _sync;
+  late final ThemeController _theme;
 
   @override
   void initState() {
@@ -53,6 +56,8 @@ class _FitnessAssistantAppState extends State<FitnessAssistantApp>
           LocalReminderService(),
         );
     _profile.load();
+    _theme = ThemeController(FitnessRepository(_profile.repository.database));
+    _theme.load();
     if (widget.profileController == null) {
       _api = ApiClient(
         refreshGuard: DatabaseLease(
@@ -82,6 +87,7 @@ class _FitnessAssistantAppState extends State<FitnessAssistantApp>
     WidgetsBinding.instance.removeObserver(this);
     _sync?.dispose();
     _api?.dispose();
+    _theme.dispose();
     if (widget.profileController == null) _profile.dispose();
     _database?.close();
     super.dispose();
@@ -93,33 +99,93 @@ class _FitnessAssistantAppState extends State<FitnessAssistantApp>
       providers: [
         Provider<AppDatabase>.value(value: _profile.repository.database),
         ChangeNotifierProvider<ProfileController>.value(value: _profile),
+        ChangeNotifierProvider<ThemeController>.value(value: _theme),
         ChangeNotifierProvider<ApiClient?>.value(value: _api),
         ChangeNotifierProvider<SyncEngine?>.value(value: _sync),
       ],
-      child: MaterialApp(
-        title: 'Фитнес-помощник',
-        debugShowCheckedModeBanner: false,
-        locale: const Locale('ru'),
-        supportedLocales: const [Locale('ru')],
-        localizationsDelegates: GlobalMaterialLocalizations.delegates,
-        theme: ThemeData(colorSchemeSeed: Colors.teal, useMaterial3: true),
-        home: _api == null
-            ? const RootScreen()
-            : Consumer<ApiClient?>(
-                builder: (context, api, _) {
-                  if (!api!.restored) {
-                    return const Scaffold(
-                      body: Center(child: CircularProgressIndicator()),
-                    );
-                  }
-                  return api.session == null
-                      ? AuthScreen(api: api, repository: _profile.repository)
-                      : const RootScreen();
-                },
-              ),
+      child: Consumer<ThemeController>(
+        builder: (context, appearance, _) => MaterialApp(
+          title: 'Фитнес-помощник',
+          debugShowCheckedModeBanner: false,
+          locale: const Locale('ru'),
+          supportedLocales: const [Locale('ru')],
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          themeMode: appearance.mode,
+          theme: _appTheme(Brightness.light, appearance.palette),
+          darkTheme: _appTheme(Brightness.dark, appearance.palette),
+          builder: (context, child) =>
+              AppBackdrop(child: child ?? const SizedBox()),
+          home: _api == null
+              ? const RootScreen()
+              : Consumer<ApiClient?>(
+                  builder: (context, api, _) {
+                    if (!api!.restored) {
+                      return const Scaffold(
+                        body: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    return api.session == null
+                        ? AuthScreen(api: api, repository: _profile.repository)
+                        : const _GoalGate();
+                  },
+                ),
+        ),
       ),
     );
   }
+}
+
+ThemeData _appTheme(Brightness brightness, AppPalette palette) {
+  final scheme = ColorScheme.fromSeed(
+    seedColor: palette == AppPalette.israel
+        ? const Color(0xFF1555A5)
+        : const Color(0xFF247E76),
+    brightness: brightness,
+  );
+  return ThemeData(
+    colorScheme: scheme,
+    useMaterial3: true,
+    scaffoldBackgroundColor: Colors.transparent,
+    appBarTheme: const AppBarTheme(backgroundColor: Colors.transparent),
+    cardTheme: CardThemeData(
+      elevation: 0,
+      color: scheme.surfaceContainerLow.withValues(alpha: .92),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+    ),
+  );
+}
+
+class _GoalGate extends StatefulWidget {
+  const _GoalGate();
+  @override
+  State<_GoalGate> createState() => _GoalGateState();
+}
+
+class _GoalGateState extends State<_GoalGate> {
+  late final Future<String?> _chosen = FitnessRepository(
+    context.read<AppDatabase>(),
+  ).setting('goalSelected');
+  bool _finished = false;
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<String?>(
+    future: _chosen,
+    builder: (context, snapshot) {
+      if (!snapshot.hasData &&
+          snapshot.connectionState != ConnectionState.done) {
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      }
+      return _finished || snapshot.data == '1'
+          ? const RootScreen()
+          : GoalsScreen(
+              onboarding: true,
+              onSaved: () => setState(() => _finished = true),
+            );
+    },
+  );
 }
 
 /// Корневой экран с нижней навигацией между основными модулями приложения.
@@ -136,9 +202,7 @@ class _RootScreenState extends State<RootScreen> {
   final _screens = const [
     NutritionScreen(),
     WorkoutsScreen(),
-    GoalsScreen(),
     ProgressScreen(),
-    AchievementsScreen(),
     ProfileScreen(),
   ];
 
@@ -148,7 +212,7 @@ class _RootScreenState extends State<RootScreen> {
     return Scaffold(
       body: Column(
         children: [
-          if (sync != null)
+          if (sync?.conflict != null)
             SafeArea(
               bottom: false,
               child: Material(
@@ -160,28 +224,8 @@ class _RootScreenState extends State<RootScreen> {
                   ),
                   child: Column(
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              sync.status,
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: 'Синхронизировать',
-                            onPressed: sync.synchronize,
-                            icon: const Icon(Icons.sync),
-                          ),
-                          IconButton(
-                            tooltip: 'Выйти',
-                            onPressed: () =>
-                                context.read<ApiClient?>()!.logout(),
-                            icon: const Icon(Icons.logout),
-                          ),
-                        ],
-                      ),
-                      if (sync.conflict != null)
+                      const Text('Есть конфликт синхронизации'),
+                      if (sync!.conflict != null)
                         Wrap(
                           spacing: 8,
                           children: [
@@ -221,19 +265,11 @@ class _RootScreenState extends State<RootScreen> {
             icon: Icon(Icons.fitness_center),
             label: 'Тренировки',
           ),
-          NavigationDestination(icon: Icon(Icons.flag), label: 'Цели'),
           NavigationDestination(
             icon: Icon(Icons.trending_up),
             label: 'Прогресс',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.emoji_events),
-            label: 'Достижения',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            label: 'Профиль',
-          ),
+          NavigationDestination(icon: Icon(Icons.tune), label: 'Настройки'),
         ],
       ),
     );

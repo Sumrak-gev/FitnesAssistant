@@ -7,6 +7,7 @@ import jwt
 import pytest
 from argon2 import PasswordHasher
 from fastapi.testclient import TestClient
+from fastapi import HTTPException, Request
 from sqlalchemy import create_engine, select
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
@@ -182,12 +183,32 @@ def test_pull_pagination_bound_cursor_and_validation(api):
 def test_auth_rate_limit_and_cors(api, monkeypatch):
     client, _ = api
     monkeypatch.setattr(get_settings(), 'auth_limit', 2)
+    credentials, _ = account(client)
+    login = {k: v for k, v in credentials.items() if k != 'display_name'}
+    # Successful logins are not failed attempts and do not consume the quota.
+    assert client.post('/auth/login', json=login).status_code == 200
+    assert client.post('/auth/login', json=login).status_code == 200
     body = {'email': 'absent@example.com', 'password': 'long-test-password', 'device_id': str(uuid4())}
     assert client.post('/auth/login', json=body).status_code == 401
     assert client.post('/auth/login', json=body).status_code == 401
     assert client.post('/auth/login', json=body).status_code == 429
     response = client.options('/sync/push', headers={'Origin': 'https://evil.example', 'Access-Control-Request-Method': 'POST'})
     assert 'access-control-allow-origin' not in response.headers
+
+
+def test_failed_attempts_limit_account_across_client_ips(monkeypatch):
+    monkeypatch.setattr(get_settings(), 'auth_limit', 2)
+    limiter.buckets.clear()
+    first = Request({'type': 'http', 'client': ('203.0.113.10', 1000)})
+    second = Request({'type': 'http', 'client': ('203.0.113.11', 1000)})
+    limiter.failed(first, 'USER@example.com')
+    limiter.failed(first, 'user@example.com')
+    with pytest.raises(HTTPException) as blocked_account:
+        limiter.check(second, 'user@example.com')
+    assert blocked_account.value.status_code == 429
+    limiter.check(second, 'another@example.com')
+    with pytest.raises(HTTPException):
+        limiter.check(first, 'another@example.com')
 
 
 def test_concurrent_refresh_replay_cannot_create_two_live_children():

@@ -43,12 +43,12 @@ void main() {
     );
     await tester.pumpWidget(FitnessAssistantApp(profileController: controller));
     await tester.pumpAndSettle();
-    expect(find.byType(NavigationDestination), findsNWidgets(6));
-    await tester.tap(find.text('Профиль').last);
+    expect(find.byType(NavigationDestination), findsNWidgets(4));
+    await tester.tap(find.text('Настройки').last);
     await tester.pumpAndSettle();
     expect(find.text('Денис'), findsOneWidget);
     expect(find.text('Ноги и грудь — базовый уровень'), findsOneWidget);
-    await tester.tap(find.text('Цели').last);
+    await tester.tap(find.text('Фитнес-цель'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Похудение'));
     await tester.pumpAndSettle();
@@ -57,8 +57,6 @@ void main() {
       GoalType.weightLoss,
     );
     expect((await controller.repository.loadProfile()).name, 'Денис');
-    await tester.tap(find.text('Профиль').last);
-    await tester.pumpAndSettle();
     expect(find.text('Похудение'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
@@ -78,7 +76,7 @@ void main() {
     );
     await tester.pumpWidget(FitnessAssistantApp(profileController: controller));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Профиль').last);
+    await tester.tap(find.text('Настройки').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Редактировать профиль'));
     await tester.pumpAndSettle();
@@ -105,7 +103,7 @@ void main() {
   ) async {
     await tester.pumpWidget(FitnessAssistantApp(profileController: controller));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Профиль').last);
+    await tester.tap(find.text('Настройки').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Редактировать профиль'));
     await tester.pumpAndSettle();

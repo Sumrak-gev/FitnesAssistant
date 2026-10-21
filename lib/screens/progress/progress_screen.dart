@@ -8,10 +8,10 @@ import '../../models/streak.dart';
 import '../../models/weekly_summary.dart';
 import '../../services/nutrition_service.dart';
 import '../../services/progress_service.dart';
-import '../../services/achievement_service.dart';
 import '../../utils/date_helpers.dart';
 import '../../utils/ru_plural.dart';
 import '../../widgets/section_card.dart';
+import '../../widgets/progress_journey.dart';
 
 /// Вкладка «Прогресс»: уровень, серии и недельные итоги.
 class ProgressScreen extends StatefulWidget {
@@ -27,8 +27,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   double? _dailyTarget;
   bool _loaded = false;
-  bool _todayDone = false;
-  int _totalWorkouts = 0;
   StreamSubscription<Object?>? _changes;
   late final ProfileController _profile;
   late final ProgressRepository _repository;
@@ -61,10 +59,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
     if (!mounted) return;
     setState(() {
       _loaded = true;
-      _todayDone = logs.any(
-        (l) => l.workoutDone && l.date == dateOnly(DateTime.now()),
-      );
-      _totalWorkouts = logs.where((l) => l.workoutDone).length;
       try {
         _dailyTarget = NutritionService()
             .normForProfile(_profile.profile)
@@ -72,21 +66,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
       } on ArgumentError {
         _dailyTarget = null;
       }
-      _snapshot = _dailyTarget == null
-          ? null
-          : _service.build(
-              logs: logs,
-              today: dateOnly(DateTime.now()),
-              dailyTarget: _dailyTarget!,
-              workoutGoal: _workoutGoal,
-            );
-    });
-    if (_snapshot != null) {
-      await AchievementService().awardProgress(
-        _repository.database,
-        _snapshot!,
+      _snapshot = _service.build(
+        logs: logs,
+        today: dateOnly(DateTime.now()),
+        dailyTarget: _dailyTarget,
+        workoutGoal: _workoutGoal,
       );
-    }
+    });
   }
 
   Future<void> _markWorkoutToday() async {
@@ -109,26 +95,18 @@ class _ProgressScreenState extends State<ProgressScreen> {
       body: !_loaded
           ? const Center(child: CircularProgressIndicator())
           : snapshot == null
-          ? ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                const Text('Заполните профиль для расчёта баланса питания.'),
-                const SizedBox(height: 16),
-                Text('Отмечено тренировок: $_totalWorkouts'),
-                FilledButton(
-                  onPressed: _todayDone ? null : _markWorkoutToday,
-                  child: Text(
-                    _todayDone
-                        ? 'Тренировка сегодня отмечена'
-                        : 'Отметить тренировку сегодня',
-                  ),
-                ),
-              ],
-            )
+          ? const Center(child: Text('Не удалось загрузить прогресс'))
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
                 _buildLevel(context, snapshot),
+                if (!snapshot.nutritionTargetAvailable)
+                  const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: Text(
+                      'Заполните профиль, чтобы получать опыт за дни в норме калорий.',
+                    ),
+                  ),
                 _buildStreaks(context, snapshot),
                 _buildCurrentWeek(context, snapshot),
                 _buildPreviousWeek(context, snapshot),
@@ -155,6 +133,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          ProgressJourney(level: level.level),
+          const SizedBox(height: 16),
           Row(
             children: [
               CircleAvatar(
@@ -186,8 +166,20 @@ class _ProgressScreenState extends State<ProgressScreen> {
           LinearProgressIndicator(value: level.progress, minHeight: 8),
           const SizedBox(height: 6),
           Text(
-            'До уровня ${level.level + 1} осталось ${level.xpToNext} XP',
+            level.level == 10
+                ? 'Максимальный уровень достигнут'
+                : 'До уровня ${level.level + 1} осталось ${level.xpToNext} XP',
             style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              Chip(label: Text('Тренировки +${s.totalWorkouts * 50} XP')),
+              Chip(label: Text('Питание +${s.nutritionDays * 20} XP')),
+              Chip(label: Text('Недели +${s.completedGoalWeeks * 100} XP')),
+            ],
           ),
         ],
       ),
@@ -237,7 +229,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           const SizedBox(height: 12),
           _DayStrip(week: week, labels: _dayLabels),
           const SizedBox(height: 12),
-          _WeekStats(week: week),
+          _WeekStats(week: week, hasTarget: s.nutritionTargetAvailable),
         ],
       ),
     );
@@ -260,7 +252,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 12),
-          _WeekStats(week: week),
+          _WeekStats(week: week, hasTarget: s.nutritionTargetAvailable),
         ],
       ),
     );
@@ -375,8 +367,9 @@ class _DayStrip extends StatelessWidget {
 
 class _WeekStats extends StatelessWidget {
   final WeeklySummary week;
+  final bool hasTarget;
 
-  const _WeekStats({required this.week});
+  const _WeekStats({required this.week, required this.hasTarget});
 
   @override
   Widget build(BuildContext context) {
@@ -388,7 +381,7 @@ class _WeekStats extends StatelessWidget {
         _StatLine('Тренировки', '${week.workouts} из ${week.workoutGoal}'),
         _StatLine(
           'Дней в норме КБЖУ',
-          week.loggedDays == 0
+          week.loggedDays == 0 || !hasTarget
               ? '—'
               : '${week.daysInNorm} из ${week.loggedDays}',
         ),
@@ -398,7 +391,10 @@ class _WeekStats extends StatelessWidget {
               ? '—'
               : '${week.avgCalories!.toStringAsFixed(0)} ккал/день',
         ),
-        _StatLine('Баланс калорий', week.loggedDays == 0 ? '—' : balanceText),
+        _StatLine(
+          'Баланс калорий',
+          week.loggedDays == 0 || !hasTarget ? '—' : balanceText,
+        ),
       ],
     );
   }

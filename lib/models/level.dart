@@ -19,9 +19,12 @@ class LevelInfo {
   });
 
   int get xpIntoLevel => totalXp - currentLevelXp;
-  int get xpToNext => nextLevelXp - totalXp;
+  int get xpToNext => nextLevelXp <= currentLevelXp ? 0 : nextLevelXp - totalXp;
 
   /// Доля заполнения шкалы уровня, от 0.0 до 1.0.
-  double get progress =>
-      (xpIntoLevel / (nextLevelXp - currentLevelXp)).clamp(0.0, 1.0).toDouble();
+  double get progress => nextLevelXp <= currentLevelXp
+      ? 1.0
+      : (xpIntoLevel / (nextLevelXp - currentLevelXp))
+            .clamp(0.0, 1.0)
+            .toDouble();
 }

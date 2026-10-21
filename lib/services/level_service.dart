@@ -10,11 +10,17 @@ class LevelService {
   static const int xpPerNutritionDay = 20;
   static const int xpPerGoalWeek = 100;
 
+  static const int maxLevel = 10;
+
   static const List<String> titles = [
     'Новичок',
-    'Любитель',
-    'Спортсмен',
-    'Атлет',
+    'Привыкаю',
+    'В ритме',
+    'Уверенный',
+    'На подъёме',
+    'Силач',
+    'Стойкий',
+    'Мощный',
     'Мастер',
     'Легенда',
   ];
@@ -35,17 +41,17 @@ class LevelService {
   LevelInfo levelFor(int xp) {
     final safeXp = xp < 0 ? 0 : xp;
     var level = 1;
-    while (safeXp >= xpForLevel(level + 1)) {
+    while (level < maxLevel && safeXp >= xpForLevel(level + 1)) {
       level++;
     }
-    final titleIndex =
-        level - 1 < titles.length ? level - 1 : titles.length - 1;
     return LevelInfo(
       level: level,
-      title: titles[titleIndex],
+      title: titles[level - 1],
       totalXp: safeXp,
       currentLevelXp: xpForLevel(level),
-      nextLevelXp: xpForLevel(level + 1),
+      nextLevelXp: level == maxLevel
+          ? xpForLevel(level)
+          : xpForLevel(level + 1),
     );
   }
 }

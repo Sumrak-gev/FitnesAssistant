@@ -35,6 +35,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-[]}
       AUTH_LIMIT: ${AUTH_LIMIT:-20}
       AUTH_WINDOW_SECONDS: ${AUTH_WINDOW_SECONDS:-60}
+      FORWARDED_ALLOW_IPS: 172.30.40.10
+    networks: [default, edge]
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -50,6 +52,9 @@ services:
   gateway:
     image: nginx:stable-alpine
     profiles: ["production"]
+    networks:
+      edge:
+        ipv4_address: 172.30.40.10
     volumes:
       - ./server/deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
@@ -60,6 +65,9 @@ services:
   https:
     image: caddy:2-alpine
     profiles: ["production"]
+    networks:
+      edge:
+        ipv4_address: 172.30.40.11
     environment:
       API_DOMAIN: ${API_DOMAIN:-localhost}
     ports:
@@ -95,3 +103,9 @@ volumes:
   caddy_data:
   caddy_config:
   backups:
+
+networks:
+  edge:
+    ipam:
+      config:
+        - subnet: 172.30.40.0/24

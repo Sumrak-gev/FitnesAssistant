@@ -67,23 +67,33 @@ class TokenResponse(BaseModel):
 
 
 class RateLimiter:
-    """Per-process guard, plus shared nginx auth limit in production (one API worker)."""
+    """Failed attempts by client IP and account; nginx adds a shared traffic cap."""
     def __init__(self):
         self.buckets = {}
         self.lock = Lock()
 
-    def check(self, request: Request):
+    def _keys(self, request: Request, account: str):
+        address = request.client.host if request.client else "unknown"
+        return (f"ip:{address}", f"account:{account.strip().lower()}")
+
+    def check(self, request: Request, account: str):
         settings = get_settings()
-        key = request.client.host if request.client else "unknown"
         now = monotonic()
         with self.lock:
             self.buckets = {k: v for k, v in self.buckets.items() if v[0] > now}
-            deadline, count = self.buckets.get(key, (now + settings.auth_window_seconds, 0))
-            if count >= settings.auth_limit:
-                raise HTTPException(429, "Too many attempts", headers={"Retry-After": str(max(1, int(deadline - now)))})
-            if key not in self.buckets and len(self.buckets) >= 10000:
-                raise HTTPException(429, "Too many attempts")
-            self.buckets[key] = (deadline, count + 1)
+            for key in self._keys(request, account):
+                deadline, count = self.buckets.get(key, (now + settings.auth_window_seconds, 0))
+                if count >= settings.auth_limit:
+                    raise HTTPException(429, "Too many attempts", headers={"Retry-After": str(max(1, int(deadline - now)))})
+
+    def failed(self, request: Request, account: str):
+        settings = get_settings()
+        now = monotonic()
+        with self.lock:
+            for key in self._keys(request, account):
+                deadline, count = self.buckets.get(key, (now + settings.auth_window_seconds, 0))
+                if len(self.buckets) < 20000 or key in self.buckets:
+                    self.buckets[key] = (deadline, count + 1)
 
 
 limiter = RateLimiter()
@@ -128,8 +138,9 @@ def attach_device(session, user, data):
     return device
 
 
-@router.post("/register", response_model=TokenResponse, status_code=201, dependencies=[Depends(limiter.check)])
-def register(data: RegisterInput, response: Response, session: Session = Depends(get_session)):
+@router.post("/register", response_model=TokenResponse, status_code=201)
+def register(data: RegisterInput, response: Response, request: Request, session: Session = Depends(get_session)):
+    limiter.check(request, str(data.email))
     user = User(email=str(data.email).lower(), display_name=data.display_name.strip(),
                 password_hash=hasher.hash(data.password.get_secret_value()))
     try:
@@ -139,20 +150,24 @@ def register(data: RegisterInput, response: Response, session: Session = Depends
         session.commit()
     except IntegrityError:
         session.rollback()
+        limiter.failed(request, str(data.email))
         raise HTTPException(409, "Account or device unavailable") from None
     response.headers["Cache-Control"] = "no-store"
     return result
 
 
-@router.post("/login", response_model=TokenResponse, dependencies=[Depends(limiter.check)])
-def login(data: AuthInput, response: Response, session: Session = Depends(get_session)):
+@router.post("/login", response_model=TokenResponse)
+def login(data: AuthInput, response: Response, request: Request, session: Session = Depends(get_session)):
+    limiter.check(request, str(data.email))
     user = session.scalar(select(User).where(func.lower(User.email) == str(data.email).lower(),
                                             User.deleted_at.is_(None), User.is_active.is_(True)))
     try:
         hasher.verify(user.password_hash if user else dummy_hash, data.password.get_secret_value())
     except (VerificationError, InvalidHashError):
+        limiter.failed(request, str(data.email))
         raise unauthorized() from None
     if user is None:
+        limiter.failed(request, str(data.email))
         raise unauthorized()
     if hasher.check_needs_rehash(user.password_hash):
         user.password_hash = hasher.hash(data.password.get_secret_value())
@@ -188,9 +203,14 @@ def refresh_session(data, session):
     return user, device, token
 
 
-@router.post("/refresh", response_model=TokenResponse, dependencies=[Depends(limiter.check)])
-def refresh(data: RefreshInput, response: Response, session: Session = Depends(get_session)):
-    user, device, token = refresh_session(data, session)
+@router.post("/refresh", response_model=TokenResponse)
+def refresh(data: RefreshInput, response: Response, request: Request, session: Session = Depends(get_session)):
+    limiter.check(request, str(data.device_id))
+    try:
+        user, device, token = refresh_session(data, session)
+    except HTTPException:
+        limiter.failed(request, str(data.device_id))
+        raise
     token.revoked_at = datetime.now(timezone.utc)
     result = issue(session, user, device, token.family_id)
     session.commit()
@@ -198,9 +218,14 @@ def refresh(data: RefreshInput, response: Response, session: Session = Depends(g
     return result
 
 
-@router.post("/logout", status_code=204, dependencies=[Depends(limiter.check)])
-def logout(data: RefreshInput, session: Session = Depends(get_session)):
-    _, _, token = refresh_session(data, session)
+@router.post("/logout", status_code=204)
+def logout(data: RefreshInput, request: Request, session: Session = Depends(get_session)):
+    limiter.check(request, str(data.device_id))
+    try:
+        _, _, token = refresh_session(data, session)
+    except HTTPException:
+        limiter.failed(request, str(data.device_id))
+        raise
     session.execute(update(RefreshToken).where(RefreshToken.family_id == token.family_id).values(revoked_at=datetime.now(timezone.utc)))
     session.commit()
 

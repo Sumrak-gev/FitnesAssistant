@@ -123,6 +123,7 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
       ],
     ),
     floatingActionButton: FloatingActionButton(
+      heroTag: 'product-create',
       tooltip: 'Новый продукт',
       onPressed: () => _edit(),
       child: const Icon(Icons.add),
@@ -168,16 +169,29 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
                 itemCount: products.length,
                 itemBuilder: (context, index) {
                   final p = products[index];
-                  return ListTile(
-                    title: Text(p.name),
-                    subtitle: Text(
-                      'На 100 г: ${p.calories} ккал · Б ${p.protein} · Ж ${p.fat} · У ${p.carbs}',
-                    ),
-                    onTap: () => _edit(p),
-                    trailing: IconButton(
-                      tooltip: 'Удалить продукт',
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: () => _delete(p),
+                  return Card(
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.primaryContainer,
+                        child: Icon(
+                          Icons.local_grocery_store_outlined,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                      title: Text(p.name),
+                      subtitle: Text(
+                        'На 100 г: ${p.calories} ккал · Б ${p.protein} · Ж ${p.fat} · У ${p.carbs}',
+                      ),
+                      onTap: () => _edit(p),
+                      trailing: IconButton(
+                        tooltip: 'Удалить продукт',
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: () => _delete(p),
+                      ),
                     ),
                   );
                 },

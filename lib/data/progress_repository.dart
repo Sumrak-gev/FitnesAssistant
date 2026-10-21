@@ -65,13 +65,6 @@ class ProgressRepository {
           'workoutDone': workout ?? data['workoutDone'] ?? false,
           'caloriesConsumed': calories ?? data['caloriesConsumed'],
         });
-        if (workout == true) {
-          await _records.save(
-            'achievement',
-            fitnessId('achievement:first_workout'),
-            {'key': 'first_workout', 'unlocked': true},
-          );
-        }
       });
 
   Future<void> markWorkout(DateTime date) => _save(date, workout: true);
