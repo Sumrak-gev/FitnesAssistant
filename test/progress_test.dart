@@ -100,7 +100,9 @@ void main() {
     });
 
     test('этап силача начинается на шестом уровне', () {
-      expect(service.levelFor(service.xpForLevel(6) - 1).level, 5);
+      final weak = service.levelFor(service.xpForLevel(6) - 1);
+      expect(weak.level, 5);
+      expect(weak.title, 'Слабак');
       final strong = service.levelFor(service.xpForLevel(6));
       expect(strong.level, 6);
       expect(strong.title, 'Силач');

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/db/app_database.dart';
 import '../../services/profile_controller.dart';
 import '../../data/progress_repository.dart';
@@ -12,6 +13,7 @@ import '../../utils/date_helpers.dart';
 import '../../utils/ru_plural.dart';
 import '../../widgets/section_card.dart';
 import '../../widgets/progress_journey.dart';
+import '../../widgets/passport_reward.dart';
 
 /// Вкладка «Прогресс»: уровень, серии и недельные итоги.
 class ProgressScreen extends StatefulWidget {
@@ -87,6 +89,21 @@ class _ProgressScreenState extends State<ProgressScreen> {
     return snapshot.currentWeek.workoutByDay[index];
   }
 
+  Future<void> _openPassportChannel() async {
+    try {
+      final opened = await launchUrl(
+        Uri.parse('https://t.me/+HW7EBXn31DVkNjMy'),
+        mode: LaunchMode.externalApplication,
+      );
+      if (opened || !mounted) return;
+    } catch (_) {
+      if (!mounted) return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Не удалось открыть Telegram-ссылку')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final snapshot = _snapshot;
@@ -100,6 +117,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
               padding: const EdgeInsets.all(16),
               children: [
                 _buildLevel(context, snapshot),
+                PassportReward(
+                  level: snapshot.level.level,
+                  onOpen: _openPassportChannel,
+                ),
                 if (!snapshot.nutritionTargetAvailable)
                   const Padding(
                     padding: EdgeInsets.all(12),

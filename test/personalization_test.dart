@@ -12,6 +12,7 @@ import 'package:fitness_assistant/screens/goals/goals_screen.dart';
 import 'package:fitness_assistant/screens/workouts/program_builder_sheet.dart';
 import 'package:fitness_assistant/services/profile_controller.dart';
 import 'package:fitness_assistant/services/theme_controller.dart';
+import 'package:fitness_assistant/widgets/passport_reward.dart';
 import 'support/fake_reminders.dart';
 
 void main() {
@@ -106,5 +107,31 @@ void main() {
     await tester.pumpAndSettle();
     expect(created?.title, 'Мой день ног');
     expect(created?.exercises.map((e) => e.id), ['squat']);
+  });
+
+  testWidgets('passport link unlocks at level six', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    var opens = 0;
+    Widget reward(int level) => MaterialApp(
+      home: Scaffold(
+        body: PassportReward(level: level, onOpen: () => opens++),
+      ),
+    );
+
+    await tester.pumpWidget(reward(5));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Получить паспорт Израиля'));
+    expect(opens, 0);
+    expect(find.text('Откроется на уровне 6 · Силач'), findsOneWidget);
+
+    await tester.pumpWidget(reward(6));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Получить паспорт Израиля'));
+    expect(opens, 1);
+    expect(find.textContaining('Telegram-канал'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

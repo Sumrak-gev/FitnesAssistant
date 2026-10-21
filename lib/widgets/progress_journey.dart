@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// A compact visual milestone: levels 1–5 are the start, 6–10 the strong stage.
+/// A compact visual milestone: levels 1–5 are the first stage, 6–10 the strong stage.
 class ProgressJourney extends StatelessWidget {
   const ProgressJourney({super.key, required this.level});
 
@@ -11,7 +11,7 @@ class ProgressJourney extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Semantics(
       label:
-          'Путь силы: уровни 1–5 — Старт, уровни 6–10 — Силач. '
+          'Путь силы: уровни 1–5 — Слабак, уровни 6–10 — Силач. '
           'Текущий уровень $level.',
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
@@ -36,7 +36,7 @@ class ProgressJourney extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    '1–5 · Старт',
+                    '1–5 · Слабак',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: scheme.onPrimary,

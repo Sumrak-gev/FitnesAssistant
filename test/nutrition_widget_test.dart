@@ -222,6 +222,12 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Уровень'), findsOneWidget);
       await capture(tester, 'progress');
+      await tester.scrollUntilVisible(
+        find.text('Получить паспорт Израиля'),
+        220,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await capture(tester, 'progress-reward');
       await tester.tap(find.text('Настройки').last);
       await tester.pumpAndSettle();
       expect(find.text('Денис'), findsOneWidget);
