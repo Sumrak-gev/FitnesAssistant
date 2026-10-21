@@ -64,8 +64,16 @@ class ProgressJourney extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Positioned.fill(
-                      child: CustomPaint(painter: _ChestStarPainter()),
+                    Positioned(
+                      left: constraints.maxWidth * .75 - 11,
+                      top: 72,
+                      width: 22,
+                      height: 26,
+                      child: Image.asset(
+                        'assets/star-of-david.png',
+                        fit: BoxFit.contain,
+                        semanticLabel: 'Звезда Давида на груди силача',
+                      ),
                     ),
                   ],
                 ),
@@ -135,46 +143,4 @@ class _JourneyPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _JourneyPainter oldDelegate) =>
       strongActive != oldDelegate.strongActive;
-}
-
-class _ChestStarPainter extends CustomPainter {
-  const _ChestStarPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.save();
-    canvas.scale(size.width / 320, size.height / 110);
-    final up = Path()
-      ..moveTo(240, 75)
-      ..lineTo(231, 90)
-      ..lineTo(249, 90)
-      ..close();
-    final down = Path()
-      ..moveTo(240, 94)
-      ..lineTo(231, 79)
-      ..lineTo(249, 79)
-      ..close();
-    for (final path in [up, down]) {
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = Colors.white
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 5
-          ..strokeJoin = StrokeJoin.round,
-      );
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = const Color(0xFF0068D8)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.5
-          ..strokeJoin = StrokeJoin.round,
-      );
-    }
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
