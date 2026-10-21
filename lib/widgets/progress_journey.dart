@@ -11,7 +11,7 @@ class ProgressJourney extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Semantics(
       label:
-          'Путь силы: уровни 1–5 — Слабак, уровни 6–10 — Силач. '
+          'Путь силы: уровни 1–5 — Мистер ЧМО, уровни 6–10 — Силач. '
           'Текущий уровень $level.',
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
@@ -28,15 +28,54 @@ class ProgressJourney extends StatelessWidget {
             SizedBox(
               height: 110,
               width: double.infinity,
-              child: CustomPaint(
-                painter: _JourneyPainter(strongActive: level >= 6),
+              child: LayoutBuilder(
+                builder: (context, constraints) => Stack(
+                  children: [
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _JourneyPainter(strongActive: level >= 6),
+                      ),
+                    ),
+                    Positioned(
+                      left: constraints.maxWidth * .25 - 53,
+                      top: 2,
+                      width: 106,
+                      height: 106,
+                      child: Opacity(
+                        opacity: level >= 6 ? .64 : 1,
+                        child: Image.asset(
+                          'assets/mr-robot-stencil.png',
+                          fit: BoxFit.contain,
+                          semanticLabel: 'Трафаретный портрет Мистера Робота',
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: constraints.maxWidth * .75 - 53,
+                      top: 2,
+                      width: 106,
+                      height: 106,
+                      child: Opacity(
+                        opacity: level >= 6 ? 1 : .64,
+                        child: Image.asset(
+                          'assets/strong-stencil.png',
+                          fit: BoxFit.contain,
+                          semanticLabel: 'Трафаретный портрет силача',
+                        ),
+                      ),
+                    ),
+                    const Positioned.fill(
+                      child: CustomPaint(painter: _ChestStarPainter()),
+                    ),
+                  ],
+                ),
               ),
             ),
             Row(
               children: [
                 Expanded(
                   child: Text(
-                    '1–5 · Слабак',
+                    '1–5 · Мистер ЧМО',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: scheme.onPrimary,
@@ -75,36 +114,6 @@ class _JourneyPainter extends CustomPainter {
     canvas.scale(size.width / 320, size.height / 110);
     final halo = Paint()..color = Colors.white.withValues(alpha: .18);
     canvas.drawCircle(Offset(strongActive ? 240 : 80, 56), 47, halo);
-    final slimPaint = Paint()
-      ..color = Colors.white.withValues(alpha: strongActive ? .58 : 1);
-    final strongPaint = Paint()
-      ..color = Colors.white.withValues(alpha: strongActive ? 1 : .64);
-
-    canvas.drawPath(_silhouette(80, strong: false), slimPaint);
-    canvas.drawPath(_silhouette(240, strong: true), strongPaint);
-
-    // The small star sits on the strong figure's chest.
-    final star = Paint()
-      ..color = const Color(0xFF0E4EA1)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..strokeJoin = StrokeJoin.round;
-    canvas.drawPath(
-      Path()
-        ..moveTo(240, 43)
-        ..lineTo(233, 56)
-        ..lineTo(247, 56)
-        ..close(),
-      star,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(240, 59)
-        ..lineTo(233, 46)
-        ..lineTo(247, 46)
-        ..close(),
-      star,
-    );
     final arrow = Paint()
       ..color = Colors.white.withValues(alpha: .76)
       ..style = PaintingStyle.stroke
@@ -123,41 +132,49 @@ class _JourneyPainter extends CustomPainter {
     canvas.restore();
   }
 
-  Path _silhouette(double x, {required bool strong}) {
-    final shoulder = strong ? 25.0 : 17.0;
-    final armOuter = strong ? 40.0 : 30.0;
-    final armInner = strong ? 24.0 : 17.0;
-    final waist = strong ? 15.0 : 11.0;
-    final legOuter = strong ? 22.0 : 18.0;
-    final legInner = strong ? 7.0 : 5.0;
-    return Path()
-      ..addOval(Rect.fromCircle(center: Offset(x, 18), radius: 12))
-      ..moveTo(x - 6, 27)
-      ..quadraticBezierTo(x, 30, x + 6, 27)
-      ..cubicTo(x + shoulder, 28, x + shoulder + 4, 34, x + shoulder + 6, 43)
-      ..lineTo(x + armOuter, 65)
-      ..quadraticBezierTo(x + armOuter + 5, 73, x + armOuter - 1, 77)
-      ..quadraticBezierTo(x + armOuter - 6, 80, x + armOuter - 10, 73)
-      ..lineTo(x + armInner, 54)
-      ..quadraticBezierTo(x + waist + 5, 68, x + waist, 75)
-      ..lineTo(x + legOuter, 99)
-      ..quadraticBezierTo(x + legOuter + 2, 106, x + legOuter - 4, 106)
-      ..lineTo(x + legInner, 106)
-      ..lineTo(x, 82)
-      ..lineTo(x - legInner, 106)
-      ..lineTo(x - legOuter + 4, 106)
-      ..quadraticBezierTo(x - legOuter - 2, 106, x - legOuter, 99)
-      ..lineTo(x - waist, 75)
-      ..quadraticBezierTo(x - waist - 5, 68, x - armInner, 54)
-      ..lineTo(x - armOuter + 10, 73)
-      ..quadraticBezierTo(x - armOuter + 6, 80, x - armOuter + 1, 77)
-      ..quadraticBezierTo(x - armOuter - 5, 73, x - armOuter, 65)
-      ..lineTo(x - shoulder - 6, 43)
-      ..cubicTo(x - shoulder - 4, 34, x - shoulder, 28, x - 6, 27)
-      ..close();
-  }
-
   @override
   bool shouldRepaint(covariant _JourneyPainter oldDelegate) =>
       strongActive != oldDelegate.strongActive;
+}
+
+class _ChestStarPainter extends CustomPainter {
+  const _ChestStarPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(size.width / 320, size.height / 110);
+    final up = Path()
+      ..moveTo(240, 75)
+      ..lineTo(231, 90)
+      ..lineTo(249, 90)
+      ..close();
+    final down = Path()
+      ..moveTo(240, 94)
+      ..lineTo(231, 79)
+      ..lineTo(249, 79)
+      ..close();
+    for (final path in [up, down]) {
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 5
+          ..strokeJoin = StrokeJoin.round,
+      );
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = const Color(0xFF0068D8)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.5
+          ..strokeJoin = StrokeJoin.round,
+      );
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
